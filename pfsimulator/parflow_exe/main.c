@@ -69,9 +69,19 @@ using namespace SAMRAI;
 #include <string.h>
 #include <unistd.h>
 
+#include "chapel_boxes.h"
+
 int main(int argc, char *argv [])
 {
-  FILE *file = NULL;
+  fprintf(stderr, "Starting execution, about to initialize chapel library.\n");
+  fflush(stderr);
+  fprintf(stderr, "argc: %d, argc1: %s\n",argc, argv[1]); 
+  char * args[3] = {"name", "-n", "1"};
+  chpl_library_init(argc, args);
+
+  fprintf(stderr, "Done with chpl_library_init.\n");
+  fflush(stderr);
+    FILE *file = NULL;
 
   FILE *log_file = NULL;
 
@@ -377,8 +387,26 @@ int main(int argc, char *argv [])
     /*-----------------------------------------------------------------------
      * Solve the problem
      *-----------------------------------------------------------------------*/
-    Solve();
+fprintf(stderr, "Initializing chapel library.\n");
+fflush(stderr);
 
+fprintf(stderr, "Initialized chapel library.\n");
+  chapel_print();
+fflush(stderr);
+
+    Point l = {0,0,0};
+    Point h = {0,0,0};
+    Box box;
+    box.lo[0] = 0;
+    box.lo[1] = 0;
+    box.lo[2] = 0;
+    box.up[0] = 0;
+    box.up[1] = 0;
+    box.up[2] = 0;
+    //print_box(box);
+    Solve();
+fprintf(stderr, "Done with solve\n");
+fflush(stderr);
     if (!amps_Rank(amps_CommWorld))
     {
       amps_Printf("Problem solved \n");
@@ -499,5 +527,6 @@ int main(int argc, char *argv [])
   RMM_ERR(rmmFinalize());
 #endif
 
+  chpl_library_finalize();
   return 0;
 }

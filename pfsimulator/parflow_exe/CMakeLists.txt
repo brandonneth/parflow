@@ -1,4 +1,20 @@
+
+
 add_executable(parflow main.c)
+
+target_include_directories(parflow PRIVATE "../chapel/lib")
+target_include_directories(parflow PRIVATE "~/chapel/lib/cray-xc/gnu/x86_64/loc-flat/comm-none/tasks-fifo/launch-slurm-srun/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/lib_pic-none/san-none/")
+target_include_directories(parflow PRIVATE "~/chapel/runtime/include")
+set (CHPL_HOME /home/users/neth/chapel)
+set (CHPL_RUNTIME_LIB ${CHPL_HOME}/lib)
+set (CHPL_RUNTIME_INCL ${CHPL_HOME}/runtime/include)
+set (CHPL_THIRD_PARTY ${CHPL_HOME}/third-party)
+
+target_include_directories(parflow PRIVATE /home/users/neth/chapel/modules/internal ${CHPL_RUNTIME_INCL}/localeModels/flat ${CHPL_RUNTIME_INCL}/localeModels ${CHPL_RUNTIME_INCL}/comm/none ${CHPL_RUNTIME_INCL}/comm ${CHPL_RUNTIME_INCL}/tasks/fifo ${CHPL_RUNTIME_INCL}/. ${CHPL_RUNTIME_INCL}/./qio ${CHPL_RUNTIME_INCL}/./atomics/cstdlib ${CHPL_RUNTIME_INCL}/./mem/cstdlib ${CHPL_THIRD_PARTY}/utf8-decoder)
+target_link_directories(parflow PRIVATE ${CHPL_RUNTIME_LIB}/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none ../chapel/lib)
+target_link_libraries(parflow chapel_boxes)
+target_link_libraries(parflow chpl)
+
 
 target_link_libraries(parflow pfsimulator)
 
@@ -65,5 +81,6 @@ endif( ${PARFLOW_ENABLE_PROFILING} )
 if ( DEFINED PARFLOW_LINKER_FLAGS)
    set_target_properties(parflow PROPERTIES LINK_FLAGS ${PARFLOW_LINKER_FLAGS})
 endif ( DEFINED PARFLOW_LINKER_FLAGS)
+
 
 install(TARGETS parflow DESTINATION bin)

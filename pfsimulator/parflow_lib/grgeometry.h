@@ -37,7 +37,7 @@
 #include "grgeom_octree.h"
 #include "grgeom_list.h"
 #include "index_space.h"
-
+#include "chapel_boxes.h"
 /*--------------------------------------------------------------------------
  * Miscellaneous structures:
  *--------------------------------------------------------------------------*/
@@ -321,9 +321,16 @@ typedef struct {
       }                                                                          \
                                                                                  \
       BoxArray* boxes = GrGeomSolidSurfaceBoxes(grgeom, PV_f);                   \
+      chpl_external_array surface_boxes = chpl_make_external_array_ptr(grgeom->surface_boxes, 8);\
+      print_boxes_from_surface_boxes(&surface_boxes, PV_f);\
+\
+      chpl_external_array chpl_boxes = chpl_make_external_array_ptr(boxes->boxes, BoxArraySize(boxes));\
+      /*print_boxes(&chpl_boxes);*/\
+      /*print_boxes_from_box_array(boxes);*/\
       for (int PV_box = 0; PV_box < BoxArraySize(boxes); PV_box++)               \
       {                                                                          \
         Box box = BoxArrayGetBox(boxes, PV_box);                                 \
+        /*printf("box: (%d, %d, %d) (%d, %d, %d)\n", box.lo[0], box.lo[1], box.lo[2], box.up[0], box.up[1], box.up[2]); */ \
         /* find octree and region intersection */                                \
         PV_ixl = pfmax(ix, box.lo[0]);                                           \
         PV_iyl = pfmax(iy, box.lo[1]);                                           \
@@ -331,8 +338,7 @@ typedef struct {
         PV_ixu = pfmin((ix + nx - 1), box.up[0]);                                \
         PV_iyu = pfmin((iy + ny - 1), box.up[1]);                                \
         PV_izu = pfmin((iz + nz - 1), box.up[2]);                                \
-                                                                                 \
-        for (k = PV_izl; k <= PV_izu; k++)                                       \
+                for (k = PV_izl; k <= PV_izu; k++)                                       \
           for (j = PV_iyl; j <= PV_iyu; j++)                                     \
             for (i = PV_ixl; i <= PV_ixu; i++)                                   \
             {                                                                    \
@@ -355,7 +361,6 @@ typedef struct {
     {                                                                        \
       GrGeomOctree  *PV_node;                                                \
       double PV_ref = pow(2.0, r);                                           \
-                                                                             \
       i = GrGeomSolidOctreeIX(grgeom) * (int)PV_ref;                         \
       j = GrGeomSolidOctreeIY(grgeom) * (int)PV_ref;                         \
       k = GrGeomSolidOctreeIZ(grgeom) * (int)PV_ref;                         \
