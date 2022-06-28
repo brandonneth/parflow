@@ -69,16 +69,13 @@ using namespace SAMRAI;
 #include <string.h>
 #include <unistd.h>
 
-#include "chapel_boxes.h"
+#include "grgeom.h"
 
 int main(int argc, char *argv [])
 {
-  fprintf(stderr, "Starting execution, about to initialize chapel library.\n");
-  fflush(stderr);
-  fprintf(stderr, "argc: %d, argc1: %s\n",argc, argv[1]); 
-  char * args[3] = {"name", "-n", "1"};
-  chpl_library_init(argc, args);
-
+  
+  chpl_library_init(1, argv);
+  chpl__init_grgeom(0,0);
   fprintf(stderr, "Done with chpl_library_init.\n");
   fflush(stderr);
     FILE *file = NULL;
@@ -387,12 +384,6 @@ int main(int argc, char *argv [])
     /*-----------------------------------------------------------------------
      * Solve the problem
      *-----------------------------------------------------------------------*/
-fprintf(stderr, "Initializing chapel library.\n");
-fflush(stderr);
-
-fprintf(stderr, "Initialized chapel library.\n");
-  chapel_print();
-fflush(stderr);
 
     Point l = {0,0,0};
     Point h = {0,0,0};

@@ -30,6 +30,7 @@
 
 #include <assert.h>
 
+#include "phase_rel_perm_chapel.h"
 /*--------------------------------------------------------------------------
  * Structures
  *--------------------------------------------------------------------------*/
@@ -681,6 +682,9 @@ void         PhaseRelPerm(
                   // Spline
                   case 0:
                   {
+                    fprintf(stderr, "Van Genuchten, CALCFCN, spline\n");
+                    fflush(stderr);
+                    GrGeomSurfLoop_chapel(gr_solid,r,ix,iy,iz,nx,ny,nz);
                     GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                    nx, ny, nz,
                     {
@@ -716,7 +720,9 @@ void         PhaseRelPerm(
                     int num_sample_points = lookup_table->num_sample_points;
                     int max = num_sample_points + 1;
 		    PF_UNUSED(max);
-
+                    fprintf(stderr, "Van Genuchten, CALCFCN, linear\n");
+                    fflush(stderr);
+                    GrGeomSurfLoop_chapel(gr_solid,r,ix,iy,iz,nx,ny,nz);
                     GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                    nx, ny, nz,
                     {
@@ -756,7 +762,17 @@ void         PhaseRelPerm(
               else
               {
                 /* Compute VanG curve */
-
+                fprintf(stderr, "Van Genuchten, CALCFCN, curve\n");
+                    fflush(stderr);
+                GrGeomSurfLoop_chapel(gr_solid, r, ix, iy, iz,
+                               nx, ny, nz);
+                               fprintf(stderr, "pr_sub data size: %d\n", pr_sub->data_size);
+                chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
+                chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
+                chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
+                chpl_external_array alphas_chapel = chpl_make_external_array_ptr(alphas, num_regions);
+                chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
+                compute_vang_curve(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity);
                 GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {
@@ -793,6 +809,8 @@ void         PhaseRelPerm(
                   // Spline
                   case 0:
                   {
+                    fprintf(stderr, "Van Genuchten, CALCDER, spline\n");
+                    fflush(stderr);
                     GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                    nx, ny, nz,
                     {

@@ -29,7 +29,6 @@
 #ifndef _GRGEOM_LIST_HEADER
 #define _GRGEOM_LIST_HEADER
 
-#include "parflow.h"
 
 /*----------------------------------------------------------------
  * List Structure
@@ -42,6 +41,7 @@ typedef struct list_member {
   struct list_member   *next_list_member;
 } ListMember;
 
+#include "parflow.h"
 
 /*--------------------------------------------------------------------------
  * Accessors : ListMember

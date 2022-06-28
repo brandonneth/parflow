@@ -33,11 +33,7 @@
 #ifndef _GR_GEOMETRY_HEADER
 #define _GR_GEOMETRY_HEADER
 
-#include "geometry.h"
-#include "grgeom_octree.h"
-#include "grgeom_list.h"
-#include "index_space.h"
-#include "chapel_boxes.h"
+typedef struct GrGeomSolid_ GrGeomSolid;
 /*--------------------------------------------------------------------------
  * Miscellaneous structures:
  *--------------------------------------------------------------------------*/
@@ -48,12 +44,16 @@ typedef struct {
   GrGeomExtents  *extents;
   int size;
 } GrGeomExtentArray;
+//#include "geometry.h"
+#include "grgeom_octree.h"
+
+#include "index_space.h"
 
 /*--------------------------------------------------------------------------
  * Solid structures:
  *--------------------------------------------------------------------------*/
 
-typedef struct {
+struct GrGeomSolid_ {
   GrGeomOctree  *data;
 
   GrGeomOctree **patches;
@@ -90,9 +90,9 @@ typedef struct {
   BoxArray* interior_boxes;
   BoxArray* surface_boxes[GrGeomOctreeNumFaces];
   BoxArray** patch_boxes[GrGeomOctreeNumFaces];
-} GrGeomSolid;
+};
 
-
+#include "grgeom_list.h"
 /*--------------------------------------------------------------------------
  * Accessor macros:
  *--------------------------------------------------------------------------*/
@@ -321,12 +321,6 @@ typedef struct {
       }                                                                          \
                                                                                  \
       BoxArray* boxes = GrGeomSolidSurfaceBoxes(grgeom, PV_f);                   \
-      chpl_external_array surface_boxes = chpl_make_external_array_ptr(grgeom->surface_boxes, 8);\
-      print_boxes_from_surface_boxes(&surface_boxes, PV_f);\
-\
-      chpl_external_array chpl_boxes = chpl_make_external_array_ptr(boxes->boxes, BoxArraySize(boxes));\
-      /*print_boxes(&chpl_boxes);*/\
-      /*print_boxes_from_box_array(boxes);*/\
       for (int PV_box = 0; PV_box < BoxArraySize(boxes); PV_box++)               \
       {                                                                          \
         Box box = BoxArrayGetBox(boxes, PV_box);                                 \
