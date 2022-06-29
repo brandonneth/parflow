@@ -54,6 +54,10 @@ proc isLeaf(node: GrGeomOctree) {
     return flagIs(node, GrGeomOctreeNodeLeaf);
 }
 
+proc isFull(node: GrGeomOctree) {
+    return flagIs(node, GrGeomOctreeNodeFull);
+}
+
 proc GrGeomOctreeHasFace(node:GrGeomOctree, face_index) {
     return (node.faces & faceValue(face_index)) != 0 ;
 }
@@ -149,6 +153,75 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
         }
     }
 }
+
+iter GrGeomOctreeInteriorLoop(in i: int, in j: int, in k: int, root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
+    var l = 0;
+    var increment = 1 << level_of_interest;
+    var node = root;
+
+    var visit_child = false;
+    var PV_visiting: [-1..level_of_interest + 1] int = 0;
+
+    while (l >= 0) {
+        if (l == level_of_interest) {
+            if(isInside(node) || isFull(node)) {
+                if((i >= ix) && (i < (ix + nx)) && (j >= iy) && (j < (iy + ny)) && (k >= iz) && (k < (iz + nz))) {
+                    yield(i,i,j,j,k,k);
+                }
+            }
+            visit_child = false;
+        } else if(isLeaf(node) || isFull(node)){
+            if (isInside(node) || isFull(node)) {
+                var xlo = max(ix,i);
+                var ylo = max(iy,j);
+                var zlo = max(iz,k);
+                var xhi = min(ix+nx,i+increment);
+                var yhi = min(iy+ny,j+increment);
+                var zhi = min(iz+nz,k+increment);
+                //the C code does < checks rather than <= checks.
+                yield(xlo,xhi-1,ylo,yhi-1,zlo,zhi-1);
+            }
+            visit_child = false;
+        } else if (!isInside(node)) {
+            visit_child = false;
+        } else if (PV_visiting[l] < GrGeomOctreeNumChildren) {
+            visit_child = true;
+        } else {visit_child = false;}
+
+        if (visit_child) {
+            node = node.children[PV_visiting[l]][0];
+            increment = increment >> 1;
+            if (PV_visiting[l] & 1) {
+                i += increment;
+            }
+            if (PV_visiting[l] & 2) {
+                j += increment;
+            }
+            if (PV_visiting[l] & 4) {
+                k += increment;
+            }
+            l += 1;
+            PV_visiting[l] = 0;
+        } else {
+            l -= 1;
+            if (PV_visiting[l] & 1) {
+                i -= increment;
+            }
+            if (PV_visiting[l] & 2) {
+                j -= increment;
+            }
+            if (PV_visiting[l] & 4) {
+                k -= increment;
+            }
+            increment = increment << 1;
+            if(node.parent != nil) {
+                node = node.parent[0];
+            }
+            PV_visiting[l] += 1;
+        }
+    }
+}
+
 iter GrGeomOctreeFaceLoop_iter(i: int, j: int, k: int, in root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
     for space in GrGeomOctreeInsideLoop(i,j,k,root,level_of_interest,ix,iy,iz,nx,ny,nz) {
         yield space;
