@@ -28,33 +28,33 @@ iter GrGeomSurfLoopBoxes_iter(ref grgeom: GrGeomSolid, ix: int, iy: int, iz: int
     for f in 0..<GrGeomOctreeNumFaces {
         var fdir: [0..2] int = create_fdir(f);
         var boxes = grgeom.surface_boxes[f][0];
-        writeln("boxes:", boxes);
+        //writeln("boxes:", boxes);
         if boxes.size == 0 then continue;
         for i in 0..<boxes.size {
             var box = boxes.boxes[i];
             var xlo = max(ix, box.lo[0]);
             var ylo = max(iy, box.lo[1]);
             var zlo = max(iz, box.lo[2]);
-            var xhi = max(ix + nx, box.up[0]);
-            var yhi = max(iy + ny, box.up[1]);
-            var zhi = max(iz + nz, box.up[2]);
-
+            var xhi = min(ix + nx -1, box.up[0]);
+            var yhi = min(iy + ny -1, box.up[1]);
+            var zhi = min(iz + nz -1, box.up[2]);
+            //writeln(xlo, " ", xhi, " ", ylo, " ", yhi, " ", zlo," ", zhi);
             yield(xlo,xhi,ylo,yhi,zlo,zhi,fdir);
         }
     }
-    writeln("done yielding");
+    //writeln("done yielding");
 }
 
 
 iter GrGeomSurfLoop_iter(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
     if(r == 0 && grgeom.surface_boxes[5] != nil) {
-        writeln("boxes.");
+        //writeln("boxes.");
         for space in GrGeomSurfLoopBoxes_iter(grgeom,ix,iy,iz,nx,ny,nz) {
             yield space;
         }
     }
     else {
-        writeln("octree");
+        //writeln("octree");
         var offset = 2 ** r;
         var i = grgeom.octree_ix * offset;
         var j = grgeom.octree_iy * offset;
@@ -66,7 +66,7 @@ iter GrGeomSurfLoop_iter(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: 
 }
 
 export proc GrGeomSurfLoop_chapel(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) { 
-    writeln("About to iterate.");
+    //writeln("About to iterate.");
     for space in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         writeln(space);
     }

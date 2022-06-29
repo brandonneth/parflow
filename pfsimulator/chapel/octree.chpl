@@ -87,7 +87,7 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
                     for f in 0..<GrGeomOctreeNumFaces {
                         if (GrGeomOctreeHasFace(node,f)) {
                             var fdir: [0..2] int = create_fdir(f);
-                            yield(i,i+1,j,j+1,k,k+1,fdir);
+                            yield(i,i,j,j,k,k,fdir);
                         }
                     }
                 }
@@ -104,7 +104,8 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
                 for f in 0..<GrGeomOctreeNumFaces {
                         if (GrGeomOctreeHasFace(node,f)) {
                             var fdir: [0..2] int = create_fdir(f);
-                            yield(xlo,xhi,ylo,yhi,zlo,zhi,fdir);
+                            //the C code does < checks rather than <= checks.
+                            yield(xlo,xhi-1,ylo,yhi-1,zlo,zhi-1,fdir);
                         }
                     }
             }
@@ -148,8 +149,8 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
         }
     }
 }
-export proc GrGeomOctreeFaceLoop_chapel(i: int, j: int, k: int, in root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
+iter GrGeomOctreeFaceLoop_iter(i: int, j: int, k: int, in root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
     for space in GrGeomOctreeInsideLoop(i,j,k,root,level_of_interest,ix,iy,iz,nx,ny,nz) {
-        writeln(space);
+        yield space;
    }
 }

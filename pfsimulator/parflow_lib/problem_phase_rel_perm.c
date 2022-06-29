@@ -763,26 +763,35 @@ void         PhaseRelPerm(
               {
                 /* Compute VanG curve */
                 fprintf(stderr, "Van Genuchten, CALCFCN, curve\n");
-                    fflush(stderr);
-                GrGeomSurfLoop_chapel(gr_solid, r, ix, iy, iz,
-                               nx, ny, nz);
-                               fprintf(stderr, "pr_sub data size: %d\n", pr_sub->data_size);
+                fflush(stderr);
+                double sum1 = 0.0;
+                for(int i = 0; i < pr_sub->data_size; i++) {
+                  sum1 += prdat[i];
+                }
+                fprintf(stdout, "prdat sum1: %f\n", sum1);
+                fflush(stdout);
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
                 chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
                 chpl_external_array alphas_chapel = chpl_make_external_array_ptr(alphas, num_regions);
                 chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
-                compute_vang_curve(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity);
-                GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
+                compute_vang_curve(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
+                //printf("pr_sub ix iy iz nx ny: %d %d %d %d %d\n", SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
+                //printf("my     ix iy iz nx ny: %d %d %d %d %d\n", ix, iy, iz, nx, ny);
+                /*GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {
+
                   int ipr = SubvectorEltIndex(pr_sub,
                                           i + fdir[0], j + fdir[1], k + fdir[2]);
                   int ipp = SubvectorEltIndex(pp_sub,
                                           i + fdir[0], j + fdir[1], k + fdir[2]);
                   int ipd = SubvectorEltIndex(pd_sub,
                                           i + fdir[0], j + fdir[1], k + fdir[2]);
-
+                  if (ipr != ipp || ipr != ipd) {
+                    printf("ipr,ipp,ipd: %d %d %d\n", ipr, ipp, ipd);
+                  }
+                  
                   if (ppdat[ipp] >= 0.0)
                     prdat[ipr] = 1.0;
                   else
@@ -796,8 +805,15 @@ void         PhaseRelPerm(
                     double ahnm1 = pow(alpha * head, n - 1);
                     prdat[ipr] = pow(1.0 - ahnm1 / (pow(opahn, m)), 2)
                                  / pow(opahn, (m / 2));
+                    
                   }
-                });
+                });/**/
+                double sum2 = 0.0;
+                for(int i = 0; i < pr_sub->data_size; i++) {
+                  sum2 += prdat[i];
+                }
+                fprintf(stdout, "prdat sum2: %f\n", sum2);
+                fflush(stdout);
               }
             }
             else  /* fcn = CALCDER */
