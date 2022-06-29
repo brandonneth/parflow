@@ -77,7 +77,7 @@ iter GrGeomInLoop_iter(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: in
         }
     }
     else {
-        //writeln("octree");
+        
         var offset = 2 ** r;
         var i = grgeom.octree_ix * offset;
         var j = grgeom.octree_iy * offset;
