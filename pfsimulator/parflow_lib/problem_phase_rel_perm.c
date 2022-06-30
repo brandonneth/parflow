@@ -30,7 +30,9 @@
 
 #include <assert.h>
 
+#ifdef PARFLOW_HAVE_CHAPEL
 #include "phase_rel_perm_chapel.h"
+#endif
 /*--------------------------------------------------------------------------
  * Structures
  *--------------------------------------------------------------------------*/
@@ -684,7 +686,6 @@ void         PhaseRelPerm(
                   {
                     fprintf(stderr, "Van Genuchten, CALCFCN, spline\n");
                     fflush(stderr);
-                    GrGeomSurfLoop_chapel(gr_solid,r,ix,iy,iz,nx,ny,nz);
                     GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                    nx, ny, nz,
                     {
@@ -722,7 +723,7 @@ void         PhaseRelPerm(
 		    PF_UNUSED(max);
                     fprintf(stderr, "Van Genuchten, CALCFCN, linear\n");
                     fflush(stderr);
-                    GrGeomSurfLoop_chapel(gr_solid,r,ix,iy,iz,nx,ny,nz);
+                    
                     GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                    nx, ny, nz,
                     {
@@ -770,15 +771,15 @@ void         PhaseRelPerm(
                 }
                 fprintf(stdout, "prdat sum1: %f\n", sum1);
                 fflush(stdout);
+                #ifdef PARFLOW_HAVE_CHAPEL
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
                 chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
                 chpl_external_array alphas_chapel = chpl_make_external_array_ptr(alphas, num_regions);
                 chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
                 calcfcn_compute_vang_curve_surface(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
-                //printf("pr_sub ix iy iz nx ny: %d %d %d %d %d\n", SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
-                //printf("my     ix iy iz nx ny: %d %d %d %d %d\n", ix, iy, iz, nx, ny);
-                /*GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
+                #else
+                GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {
 
@@ -807,7 +808,8 @@ void         PhaseRelPerm(
                                  / pow(opahn, (m / 2));
 
                   }
-                });/**/
+                });
+                #endif
                 double sum2 = 0.0;
                 for(int i = 0; i < pr_sub->data_size; i++) {
                   sum2 += prdat[i];
@@ -910,7 +912,7 @@ void         PhaseRelPerm(
                 /* Compute VanG curve */
                 //fprintf(stderr, "Van Genuchten, CALCDER, calc curve\n");
                 //fflush(stderr);
-
+                #ifdef PARFLOW_HAVE_CHAPEL
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
                 chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
@@ -918,8 +920,8 @@ void         PhaseRelPerm(
                 chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
                 
                 calcder_compute_vang_curve_surface(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
-
-                /*GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
+                #else
+                GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {
                   int ipr = SubvectorEltIndex(pr_sub,
@@ -949,7 +951,8 @@ void         PhaseRelPerm(
                                  + pow(coeff, 2) * (m / 2) * pow(opahn, (-(m + 2) / 2))
                                  * n * alpha * ahnm1;
                   }
-                });/**/
+                });
+                #endif
                 double sum = 0.0;
                 for(int i = 0; i < pr_sub->data_size; i++) {
                   sum += prdat[i];
@@ -1179,13 +1182,15 @@ void         PhaseRelPerm(
               else
               {
                 /* Compute VanG curve */
+                #ifdef PARFLOW_HAVE_CHAPEL
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
                 chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
                 chpl_external_array alphas_chapel = chpl_make_external_array_ptr(alphas, num_regions);
                 chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
                 calcfcn_compute_vang_curve_interior(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
-                /*GrGeomInLoop(i, j, k, gr_solid, r, ix, iy, iz, nx, ny, nz,
+                #else
+                GrGeomInLoop(i, j, k, gr_solid, r, ix, iy, iz, nx, ny, nz,
                 {
                   int ipr = SubvectorEltIndex(pr_sub, i, j, k);
                   int ipp = SubvectorEltIndex(pp_sub, i, j, k);
@@ -1205,7 +1210,8 @@ void         PhaseRelPerm(
                     prdat[ipr] = pow(1.0 - ahnm1 / (pow(opahn, m)), 2)
                                  / pow(opahn, (m / 2));
                   }
-                });/**/
+                });
+                #endif
 
                 double sum2 = 0.0;
                 for(int i = 0; i < pp_sub->data_size; i++) {
@@ -1288,14 +1294,15 @@ void         PhaseRelPerm(
               else
               {
                 /* Compute VanG curve */
+                #ifdef PARFLOW_HAVE_CHAPEL
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
                 chpl_external_array pd_sub_chapel = chpl_make_external_array_ptr(pd_sub->data, pd_sub->data_size);
                 chpl_external_array alphas_chapel = chpl_make_external_array_ptr(alphas, num_regions);
                 chpl_external_array ns_chapel = chpl_make_external_array_ptr(ns, num_regions);
                 calcder_compute_vang_curve_interior(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
-
-                /*GrGeomInLoop(i, j, k, gr_solid, r, ix, iy, iz, nx, ny, nz,
+                #else
+                GrGeomInLoop(i, j, k, gr_solid, r, ix, iy, iz, nx, ny, nz,
                 {
                   int ipr = SubvectorEltIndex(pr_sub, i, j, k);
                   int ipp = SubvectorEltIndex(pp_sub, i, j, k);
@@ -1321,7 +1328,8 @@ void         PhaseRelPerm(
                                  + pow(coeff, 2) * (m / 2) * pow(opahn, (-(m + 2) / 2))
                                  * n * alpha * ahnm1;
                   }
-                });/**/
+                });
+                #endif
                 double sum = 0.0;
                 for(int i = 0; i < pr_sub->data_size; i++) {
                   sum += prdat[i];

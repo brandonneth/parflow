@@ -69,15 +69,18 @@ using namespace SAMRAI;
 #include <string.h>
 #include <unistd.h>
 
+#ifdef PARFLOW_HAVE_CHAPEL
 #include "grgeom.h"
-
+#endif
 int main(int argc, char *argv [])
 {
   
+  #ifdef PARFLOW_HAVE_CHAPEL
   chpl_library_init(1, argv);
   chpl__init_grgeom(0,0);
   fprintf(stderr, "Done with chpl_library_init.\n");
   fflush(stderr);
+  #endif
     FILE *file = NULL;
 
   FILE *log_file = NULL;
@@ -518,6 +521,8 @@ fflush(stderr);
   RMM_ERR(rmmFinalize());
 #endif
 
+  #ifdef PARFLOW_HAVE_CHAPEL
   chpl_library_finalize();
+  #endif
   return 0;
 }
