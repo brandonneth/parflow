@@ -76,10 +76,21 @@ int main(int argc, char *argv [])
 {
   
   #ifdef PARFLOW_HAVE_CHAPEL
-  chpl_library_init(1, argv);
-  chpl__init_grgeom(0,0);
-  fprintf(stderr, "Done with chpl_library_init.\n");
+  //fprintf(stderr, "chpl_library_init(argc,argv)\n");
+  //fprintf(stderr, "chpl_library_init(0,argv)\n");
+  fprintf(stderr, "chpl_library_init(1,argv)\n");
+
   fflush(stderr);
+  
+  //chpl_library_init(argc, argv);
+  //chpl_library_init(0, argv);
+  chpl_library_init(1, argv);
+  
+  fprintf(stderr, "done with init.\n");
+  fflush(stderr);
+  
+  chpl__init_grgeom(0,0);
+  
   #endif
     FILE *file = NULL;
 
