@@ -764,13 +764,7 @@ void         PhaseRelPerm(
               {
                 /* Compute VanG curve */
                 //fprintf(stderr, "Van Genuchten, CALCFCN, curve\n");
-                fflush(stderr);
-                double sum1 = 0.0;
-                for(int i = 0; i < pr_sub->data_size; i++) {
-                  sum1 += prdat[i];
-                }
-                fprintf(stdout, "prdat sum1: %f\n", sum1);
-                fflush(stdout);
+                
                 #ifdef PARFLOW_HAVE_CHAPEL
                 chpl_external_array pr_sub_chapel = chpl_make_external_array_ptr(pr_sub->data, pr_sub->data_size);
                 chpl_external_array pp_sub_chapel = chpl_make_external_array_ptr(pp_sub->data, pp_sub->data_size);
@@ -810,12 +804,7 @@ void         PhaseRelPerm(
                   }
                 });
                 #endif
-                double sum2 = 0.0;
-                for(int i = 0; i < pr_sub->data_size; i++) {
-                  sum2 += prdat[i];
-                }
-                fprintf(stdout, "prdat sum2: %f\n", sum2);
-                fflush(stdout);
+               
               }
             }
             else  /* fcn = CALCDER */

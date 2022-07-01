@@ -4,8 +4,9 @@ add_executable(parflow main.c)
 
 target_include_directories(parflow PRIVATE "../chapel/lib")
 target_include_directories(parflow PRIVATE "~/chapel/lib/darwin/clang/x86_64/cpu-native/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none")
+target_include_directories(parflow PRIVATE "~/chapel/lib/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none")
 target_include_directories(parflow PRIVATE "~/chapel/runtime/include")
-set (CHPL_HOME /users/brandonneth/chapel)
+set (CHPL_HOME /home/users/neth/chapel)
 set (CHPL_RUNTIME_LIB ${CHPL_HOME}/lib)
 set (CHPL_RUNTIME_INCL ${CHPL_HOME}/runtime/include)
 set (CHPL_THIRD_PARTY ${CHPL_HOME}/third-party)
@@ -14,7 +15,7 @@ target_include_directories(parflow PRIVATE ${CHPL_HOME}/modules/internal ${CHPL_
 target_link_directories(parflow PRIVATE ${CHPL_RUNTIME_LIB}/darwin/clang/x86_64/cpu-native/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none ../chapel/lib)
 
 target_link_libraries(parflow chpl)
-
+target_link_directories(parflow PRIVATE ${CHPL_RUNTIME_LIB}/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none)
 
 target_link_libraries(parflow pfsimulator)
 
