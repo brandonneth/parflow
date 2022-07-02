@@ -31,7 +31,7 @@
 #include <assert.h>
 
 #ifdef PARFLOW_HAVE_CHAPEL
-#include "phase_rel_perm_chapel.h"
+#include "chapel_impl.h"
 #endif
 /*--------------------------------------------------------------------------
  * Structures
@@ -942,11 +942,7 @@ void         PhaseRelPerm(
                   }
                 });
                 #endif
-                double sum = 0.0;
-                for(int i = 0; i < pr_sub->data_size; i++) {
-                  sum += prdat[i];
-                }
-                printf("sum: %f\n", sum);
+                
               }
             }   /* End else clause */
           }     /* End subgrid loop */
@@ -1202,11 +1198,6 @@ void         PhaseRelPerm(
                 });
                 #endif
 
-                double sum2 = 0.0;
-                for(int i = 0; i < pp_sub->data_size; i++) {
-                  sum2 += prdat[i];
-                }
-                printf("sum2: %f\n", sum2);
               }
             }    /* End if clause */
             else /* fcn = CALCDER */
@@ -1319,11 +1310,7 @@ void         PhaseRelPerm(
                   }
                 });
                 #endif
-                double sum = 0.0;
-                for(int i = 0; i < pr_sub->data_size; i++) {
-                  sum += prdat[i];
-                }
-                printf("sum: %f\n", sum);
+               
               }
             }   /* End else clause */
           }     /* End subgrid loop */

@@ -44,6 +44,9 @@
 #include "llnltyps.h"
 #include "assert.h"
 
+#ifdef PARFLOW_HAVE_CHAPEL
+#include "chapel_impl.h"
+#endif
 /*---------------------------------------------------------------------
  * Define module structures
  *---------------------------------------------------------------------*/
@@ -596,6 +599,43 @@ void    RichardsJacobianEval(
     FBy_dat = SubvectorData(FBy_sub);
     FBz_dat = SubvectorData(FBz_sub);
 
+    #ifdef PARFLOW_HAVE_CHAPEL
+    chpl_external_array pp_chapel = chpl_make_external_array_ptr(p_sub->data, p_sub->data_size);
+    chpl_external_array dp_chapel = chpl_make_external_array_ptr(d_sub->data, d_sub->data_size);
+    chpl_external_array rpp_chapel = chpl_make_external_array_ptr(rp_sub->data, rp_sub->data_size);
+    chpl_external_array ddp_chapel = chpl_make_external_array_ptr(dd_sub->data, dd_sub->data_size);
+    chpl_external_array rpdp_chapel = chpl_make_external_array_ptr(rpd_sub->data, rpd_sub->data_size);
+    
+    chpl_external_array permxp_chapel = chpl_make_external_array_ptr(permx_sub->data, permx_sub->data_size);
+    chpl_external_array permyp_chapel = chpl_make_external_array_ptr(permy_sub->data, permy_sub->data_size);
+    chpl_external_array permzp_chapel = chpl_make_external_array_ptr(permz_sub->data, permz_sub->data_size);
+
+    chpl_external_array fb_x_chapel = chpl_make_external_array_ptr(FBx_sub->data, FBx_sub->data_size);
+    chpl_external_array fb_y_chapel = chpl_make_external_array_ptr(FBy_sub->data, FBy_sub->data_size);
+    chpl_external_array fb_z_chapel = chpl_make_external_array_ptr(FBz_sub->data, FBz_sub->data_size);
+
+    chpl_external_array x_ssl_chapel = chpl_make_external_array_ptr(x_ssl_sub->data, x_ssl_sub->data_size);
+    chpl_external_array y_ssl_chapel = chpl_make_external_array_ptr(y_ssl_sub->data, y_ssl_sub->data_size);
+    chpl_external_array z_mult_chapel = chpl_make_external_array_ptr(z_mult_sub->data, z_mult_sub->data_size);
+
+    chpl_external_array cp_chapel = chpl_make_external_array_ptr(cp, 3);
+    chpl_external_array wp_chapel = chpl_make_external_array_ptr(wp, 3);
+    chpl_external_array ep_chapel = chpl_make_external_array_ptr(ep, 3);
+    chpl_external_array sop_chapel = chpl_make_external_array_ptr(sop, 3);
+    chpl_external_array np_chapel = chpl_make_external_array_ptr(np, 3);
+    chpl_external_array lp_chapel = chpl_make_external_array_ptr(lp, 3);
+    chpl_external_array up_chapel = chpl_make_external_array_ptr(up, 3);
+    richards_gravity_and_second_order_derivative_interior(
+      gr_domain, r, ix, iy, iz, nx, ny, nz,
+      &pp_chapel, &dp_chapel, &rpp_chapel, &ddp_chapel, &rpdp_chapel,
+      &permxp_chapel, &permyp_chapel, &permzp_chapel,
+      &fb_x_chapel, &fb_y_chapel, &fb_z_chapel,
+      &x_ssl_chapel, &y_ssl_chapel, &z_mult_chapel,
+      &cp_chapel,&wp_chapel,&ep_chapel,&sop_chapel,&np_chapel,&lp_chapel,&up_chapel,
+      grid2d_iz, dx,dy,dz,dt,sy_v, sz_v, 
+      public_xtra->tfgupwind, gravity, viscosity);
+    
+    #else
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
       int ip = SubvectorEltIndex(p_sub, i, j, k);
@@ -779,6 +819,7 @@ void    RichardsJacobianEval(
         PlusEquals(up[im], sym_upper_temp);
       }
     });
+    #endif
   }  //
 
   /*  Calculate correction for boundary conditions */

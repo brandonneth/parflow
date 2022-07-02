@@ -15,9 +15,11 @@ grid2d_iz: int, dx: int, dy: int, dz: int, dt: int, sy_v: int, sz_v: int, //scal
 tfgupwind: int, gravity: real, viscosity: real // other scalars
 )
 {
+    writeln("chapel richards gravity interior.");
     var ffx = dy * dz;
     var ffy = dx * dz;
     var ffz = dx * dy;
+    
     for (xl,xu,yl,yu,zl,zu) in GrGeomInLoop_iter(gr_domain, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
         for (i,j,k) in dom {
