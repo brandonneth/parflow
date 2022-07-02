@@ -618,22 +618,27 @@ void    RichardsJacobianEval(
     chpl_external_array y_ssl_chapel = chpl_make_external_array_ptr(y_ssl_sub->data, y_ssl_sub->data_size);
     chpl_external_array z_mult_chapel = chpl_make_external_array_ptr(z_mult_sub->data, z_mult_sub->data_size);
 
-    chpl_external_array cp_chapel = chpl_make_external_array_ptr(cp, 3);
-    chpl_external_array wp_chapel = chpl_make_external_array_ptr(wp, 3);
-    chpl_external_array ep_chapel = chpl_make_external_array_ptr(ep, 3);
-    chpl_external_array sop_chapel = chpl_make_external_array_ptr(sop, 3);
-    chpl_external_array np_chapel = chpl_make_external_array_ptr(np, 3);
-    chpl_external_array lp_chapel = chpl_make_external_array_ptr(lp, 3);
-    chpl_external_array up_chapel = chpl_make_external_array_ptr(up, 3);
+    chpl_external_array J_chapel = chpl_make_external_array_ptr(J_sub->data, J_sub->data_size);
+    chpl_external_array cp_chapel = chpl_make_external_array_ptr(cp, J_sub->data_size);
+    chpl_external_array wp_chapel = chpl_make_external_array_ptr(wp, J_sub->data_size);
+    chpl_external_array ep_chapel = chpl_make_external_array_ptr(ep, J_sub->data_size);
+    chpl_external_array sop_chapel = chpl_make_external_array_ptr(sop, J_sub->data_size);
+    chpl_external_array np_chapel = chpl_make_external_array_ptr(np, J_sub->data_size);
+    chpl_external_array lp_chapel = chpl_make_external_array_ptr(lp, J_sub->data_size);
+    chpl_external_array up_chapel = chpl_make_external_array_ptr(up, J_sub->data_size);
     richards_gravity_and_second_order_derivative_interior(
       gr_domain, r, ix, iy, iz, nx, ny, nz,
       &pp_chapel, &dp_chapel, &rpp_chapel, &ddp_chapel, &rpdp_chapel,
       &permxp_chapel, &permyp_chapel, &permzp_chapel,
       &fb_x_chapel, &fb_y_chapel, &fb_z_chapel,
       &x_ssl_chapel, &y_ssl_chapel, &z_mult_chapel,
-      &cp_chapel,&wp_chapel,&ep_chapel,&sop_chapel,&np_chapel,&lp_chapel,&up_chapel,
-      grid2d_iz, dx,dy,dz,dt,sy_v, sz_v, 
-      public_xtra->tfgupwind, gravity, viscosity);
+      &J_chapel,&cp_chapel,&wp_chapel,&ep_chapel,&sop_chapel,&np_chapel,&lp_chapel,&up_chapel,
+      grid2d_iz, dx,dy,dz,dt,sy_v, sz_v, sy_m, sz_m,
+      public_xtra->tfgupwind, gravity, viscosity,
+      SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
+      SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
+      SubvectorIX(x_ssl_sub), SubvectorIY(x_ssl_sub), SubvectorIZ(x_ssl_sub), SubvectorNX(x_ssl_sub), SubvectorNY(x_ssl_sub),
+      symm_part);
     
     #else
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
