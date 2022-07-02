@@ -291,5 +291,5 @@ target_include_directories(pfsimulator PRIVATE ${CHPL_HOME}/modules/internal ${C
 
 target_link_directories(pfsimulator PRIVATE ${CHPL_RUNTIME_LIB}/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none ../chapel/lib)
 
-target_link_libraries(pfsimulator phase_rel_perm_chapel)
+target_link_libraries(pfsimulator chapel_impl)
 target_link_libraries(pfsimulator chpl)
