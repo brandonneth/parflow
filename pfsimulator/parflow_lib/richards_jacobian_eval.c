@@ -599,7 +599,7 @@ void    RichardsJacobianEval(
     FBy_dat = SubvectorData(FBy_sub);
     FBz_dat = SubvectorData(FBz_sub);
 
-    #ifdef PARFLOW_HAVE_CHAPEL
+    #if defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
     chpl_external_array pp_chapel = chpl_make_external_array_ptr(p_sub->data, p_sub->data_size);
     chpl_external_array dp_chapel = chpl_make_external_array_ptr(d_sub->data, d_sub->data_size);
     chpl_external_array rpp_chapel = chpl_make_external_array_ptr(rp_sub->data, rp_sub->data_size);
@@ -639,8 +639,9 @@ void    RichardsJacobianEval(
       SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
       SubvectorIX(x_ssl_sub), SubvectorIY(x_ssl_sub), SubvectorIZ(x_ssl_sub), SubvectorNX(x_ssl_sub), SubvectorNY(x_ssl_sub),
       symm_part);
-    
-    #else
+    #endif
+    #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
+    fprintf(stderr, "calling macro.\n");
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
       int ip = SubvectorEltIndex(p_sub, i, j, k);

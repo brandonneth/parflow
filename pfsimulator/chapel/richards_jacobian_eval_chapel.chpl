@@ -1,7 +1,7 @@
 use grgeom;
 use CTypes;
 use phase_rel_perm_chapel;
-
+//config param call_only = 0;
 proc mean(a,b) { return (a+b) / 2;}
 
 proc harmonic_mean(a,b) {
@@ -52,6 +52,9 @@ six: int, siy: int, siz: int, snx: int, sny: int,
 symm_part: int
 )
 {
+    if(call_only) {
+        return;
+    }
     writeln("chapel richards gravity interior.");
     var ffx = dy * dz;
     var ffy = dx * dz;
@@ -59,11 +62,11 @@ symm_part: int
     
     for (xl,xu,yl,yu,zl,zu) in GrGeomInLoop_iter(gr_domain, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
-        for (i,j,k) in dom {
+        forall (i,j,k) in dom {
             var ip = subvector_elt_index(i,j,k,pix,piy,piz,pnx,pny);
             var im = subvector_elt_index(i,j,k,jix,jiy,jiz,jnx,jny);
             var ioo = subvector_elt_index(i,j,grid2d_iz,six,siy,siz,snx,sny);
-            
+
             var prod = rpp[ip] * dp[ip];
             var prod_der = rpdp[ip] * dp[ip] + rpp[ip] * ddp[ip];
 
