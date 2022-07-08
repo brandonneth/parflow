@@ -2,20 +2,23 @@ use grgeom;
 use CTypes;
 config param call_only = 0;
 proc subvector_elt_index(x,y,z,ix,iy,iz,nx,ny) {
-    return (((x) - ix) + (((y) - iy) + (((z) - iz)) *  ny) * nx);
+    return ((x - ix) + ((y - iy) + ((z - iz) *  ny)) * nx);
 }
 
-export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
+export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, 
+    ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, 
+    pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
+    gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     if(call_only) {
         return;
     }
-    writeln("computing vang curve.");
+    
 
-    //writeln("pr_sub sum in chapel, start: ", sum1);
     for (xl,xu,yl,yu,zl,zu,fdir) in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
+
         //writeln("computing for:", (xl,xu,yl,yu,zl,zu));
-        forall (i,j,k) in dom {
+        for (i,j,k) in dom {
 
             //do thing
             var idx = subvector_elt_index(i + fdir[0], j + fdir[1], k + fdir[2], ixv, iyv, izv, nxv, nyv);
@@ -44,10 +47,11 @@ export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, i
     if(call_only) {
         return;
     }
+    writeln("Amount of parallelism: ", here.maxTaskPar);
     for (xl,xu,yl,yu,zl,zu,fdir) in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
-        //writeln("computing for:", (xl,xu,yl,yu,zl,zu));
-        forall (i,j,k) in dom {
+        //writeln("domain size:", dom.size);
+        for (i,j,k) in dom {
 
             //do thing
             var idx = subvector_elt_index(i + fdir[0], j + fdir[1], k + fdir[2], ixv, iyv, izv, nxv, nyv);
@@ -83,7 +87,7 @@ export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, 
     for (xl,xu,yl,yu,zl,zu) in GrGeomInLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
         //writeln("computing for:", (xl,xu,yl,yu,zl,zu));
-        forall (i,j,k) in dom {
+        for (i,j,k) in dom {
 
             //do thing
             var idx = subvector_elt_index(i , j , k, ixv, iyv, izv, nxv, nyv);
@@ -115,16 +119,12 @@ export proc calcfcn_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, 
     if(call_only) {
         return;
     }
-    //writeln("computing vang curve.");
-    var sum1 = 0.0;
-    for i in 0..<pr_sub.size {
-        sum1 += pr_sub[i];
-    }
+
     //writeln("pr_sub sum in chapel, start: ", sum1);
     for (xl,xu,yl,yu,zl,zu) in GrGeomInLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
         //writeln("computing for:", (xl,xu,yl,yu,zl,zu));
-        forall (i,j,k) in dom {
+        for (i,j,k) in dom {
 
             //do thing
             var idx = subvector_elt_index(i, j, k, ixv, iyv, izv, nxv, nyv);

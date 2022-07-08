@@ -2,20 +2,10 @@
 
 add_executable(parflow main.c)
 
-target_include_directories(parflow PRIVATE "../chapel/lib")
-target_include_directories(parflow PRIVATE "~/chapel/lib/darwin/clang/x86_64/cpu-native/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none")
-target_include_directories(parflow PRIVATE "~/chapel/lib/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none")
-target_include_directories(parflow PRIVATE "~/chapel/runtime/include")
-set (CHPL_HOME $ENV{CHPL_HOME})
-set (CHPL_RUNTIME_LIB ${CHPL_HOME}/lib)
-set (CHPL_RUNTIME_INCL ${CHPL_HOME}/runtime/include)
-set (CHPL_THIRD_PARTY ${CHPL_HOME}/third-party)
-
-target_include_directories(parflow PRIVATE ${CHPL_HOME}/modules/internal ${CHPL_RUNTIME_INCL}/localeModels/flat ${CHPL_RUNTIME_INCL}/localeModels ${CHPL_RUNTIME_INCL}/comm/none ${CHPL_RUNTIME_INCL}/comm ${CHPL_RUNTIME_INCL}/tasks/fifo ${CHPL_RUNTIME_INCL}/. ${CHPL_RUNTIME_INCL}/./qio ${CHPL_RUNTIME_INCL}/./atomics/cstdlib ${CHPL_RUNTIME_INCL}/./mem/cstdlib ${CHPL_THIRD_PARTY}/utf8-decoder)
-target_link_directories(parflow PRIVATE ${CHPL_RUNTIME_LIB}/darwin/clang/x86_64/cpu-native/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none ../chapel/lib)
-
-target_link_libraries(parflow chpl)
-target_link_directories(parflow PRIVATE ${CHPL_RUNTIME_LIB}/cray-xc/cray-prgenv-cray/x86_64/cpu-none/loc-flat/comm-none/tasks-fifo/tmr-generic/unwind-none/mem-cstdlib/atomics-cstdlib/hwloc-none/re2-none/fs-none/lib_pic-none/san-none)
+include(../chapel/CMakeLists.txt)
+target_include_directories(parflow PRIVATE ${CHPL_INCLUDE_DIRECTORIES})
+target_link_directories(parflow PRIVATE ${CHPL_LINK_DIRECTORIES})
+target_link_libraries(parflow ${CHPL_LINK_LIBRARIES})
 
 target_link_libraries(parflow pfsimulator)
 

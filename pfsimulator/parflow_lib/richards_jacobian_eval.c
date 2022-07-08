@@ -641,7 +641,6 @@ void    RichardsJacobianEval(
       symm_part);
     #endif
     #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
-    fprintf(stderr, "calling macro.\n");
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
       int ip = SubvectorEltIndex(p_sub, i, j, k);
