@@ -17,6 +17,91 @@
 
 
 
+LAUNCH_DIR=$(pwd)
+
+
+
+CMAKE_ORIGINAL="cmake ${CMAKE_DEFS} .."
+
+CMAKE_CHAPEL="${CMAKE_ORIGINAL} -DPARFLOW_HAVE_CHAPEL=ON"
+
+
+echo "Reading command line arguments..."
+
+LW="LW_Tiny.tcl"
+RUN_ORIGINAL=0
+RUN_CHAPEL=0
+RUN_CALL_ONLY=0
+RUN_CHAPEL_FAST=0
+APEEND=0
+RESULT_NAME=performance-evaluation.results
+CHECK_CORRECTNESS=0
+NUMRUNS=2
+while test $# -gt 0
+do
+    case "$1" in
+        --original) echo "Running original variant";
+            RUN_ORIGINAL=1
+            ;;
+        --chapel) echo "Running chapel variant";
+            RUN_CHAPEL=1
+            ;;
+        --call-only) echo "Running call only variant";
+            RUN_CALL_ONLY=1
+            ;;
+        --chapel-fast) echo "Running chapel fast variant";
+            RUN_CHAPEL_FAST=1
+            ;;
+        --append) echo "Appending to results file";
+            APPEND=1
+            ;;
+        --outfile) echo "Writing to $2";
+            RESULT_NAME=$2
+            shift
+            ;;
+        --n) echo "running $2 times";
+            NUMRUNS=$2; shift
+            ;;
+        --check-correctness) echo "Checking correctness for executed variants.";
+            CHECK_CORRECTNESS=1
+            ;;
+        *) echo "argument $1"
+            ;;
+    esac
+    shift
+done
+RUNSEQ=$(seq 1 $NUMRUNS)
+
+
+
+configure_parflow() {
+    CMAKE_DEFS="-DPARFLOW_HAVE_CLM=ON -DCMAKE_INSTALL_PREFIX=${PARFLOW_DIR} \
+    -DSILO_ROOT=$HOME/silo -DHYPRE_ROOT=$HOME/hypre/src/hypre \
+    -DPARFLOW_AMPS_LAYER=mpi1 -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
+    -DPARFLOW_ENABLE_TIMING=true"
+
+    while test $# -gt 0
+    do
+        case "$1" in
+            --call-only) CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_CALL_ONLY=ON"
+                ;;
+            --chapel) CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_HAVE_CHAPEL=ON"
+        esac
+        shift
+    done
+
+    if [[ $CHECK_CORRECTNESS -eq 1 ]]; then
+        CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_CHECK_CORRECTNESS=ON"
+    fi
+
+    cd $PARFLOW_DIR
+    cd build
+    rm -rf ./*
+    cmake $CMAKE_DEFS ..
+}
+#
+#Functions
+#
 build_parflow() {
     BP_CMD="make -j16"
 
@@ -67,95 +152,54 @@ build_chapel_modules() {
     fi
 }
 
-#Runs the example and saves the execution times. Name of the variant is 
-# the first and only argument to this function
-run_example() {
-RE_VARIANT_NAME=$1
-
-cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
-
-echo -n "${RE_VARIANT_NAME}," >> $RESULTS_FILE
-
-for i in $RUNSEQ
-do
-    rm Outputs/cp.out
-    echo "${RE_VARIANT_NAME}, run $i"
-    tclsh $LW
-
-    RESULT_LINE="$(grep "Total Run Time" Outputs/LW.out.log)"
-    RESULT_ARRAY=($RESULT_LINE)
-    EXEC_TIME=${RESULT_ARRAY[3]}
-    echo $EXEC_TIME
-    echo -n " $EXEC_TIME," >> $RESULTS_FILE
-done
-echo >> $RESULTS_FILE
-
-
-}
-
 check_correctness() {
+    echo "Checking correctness..."
     cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
-    diff Outputs/cp.out correct_output/cp.out >> correctness_diff 
-    if [ -s correctness_diff ]; then
+
+    
+    DIFF_CMD=$(numdiff -r 1e-5 -q Outputs/cp.out correct_output/cp.out)
+    if [ "$DIFF_CMD" ]; then
         echo "Correctness check failed."
+        echo "$DIFF_CMD" > $LAUNCH_DIR/correctness_diff
+    else
+        echo "Correctness check passed."
     fi
 }
 
+#Runs the example and saves the execution times. Name of the variant is 
+# the first and only argument to this function
+run_example() {
+    RE_VARIANT_NAME=$1
 
-LAUNCH_DIR=$(pwd)
+    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 
-CMAKE_DEFS="-DPARFLOW_HAVE_CLM=ON -DCMAKE_INSTALL_PREFIX=${PARFLOW_DIR} \
--DSILO_ROOT=$HOME/silo -DHYPRE_ROOT=$HOME/hypre/src/hypre \
--DPARFLOW_AMPS_LAYER=mpi1 -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
--DPARFLOW_ENABLE_TIMING=true"
+    echo -n "${RE_VARIANT_NAME}," >> $RESULTS_FILE
 
-CMAKE_ORIGINAL="cmake ${CMAKE_DEFS} .."
+    for i in $RUNSEQ
+    do
+        rm Outputs/cp.out
+        echo "${RE_VARIANT_NAME}, run $i"
+        tclsh $LW
 
-CMAKE_CHAPEL="${CMAKE_ORIGINAL} -DPARFLOW_HAVE_CHAPEL=ON"
+        RESULT_LINE="$(grep "Total Run Time" Outputs/LW.out.log)"
+        RESULT_ARRAY=($RESULT_LINE)
+        EXEC_TIME=${RESULT_ARRAY[3]}
+        echo $EXEC_TIME
+        echo -n " $EXEC_TIME," >> $RESULTS_FILE
+    done
+    echo >> $RESULTS_FILE
+
+    if [[ $CHECK_CORRECTNESS -eq 1 ]]; then
+        check_correctness
+    fi
+
+}
 
 
-echo "Reading command line arguments..."
 
-LW="LW_Tiny.tcl"
-RUN_ORIGINAL=0
-RUN_CHAPEL=0
-RUN_CALL_ONLY=0
-RUN_CHAPEL_FAST=0
-APEEND=0
-RESULT_NAME=performance-evaluation.results
-NUMRUNS=2
-while test $# -gt 0
-do
-    case "$1" in
-        --original) echo "Running original variant";
-            RUN_ORIGINAL=1
-            ;;
-        --chapel) echo "Running chapel variant";
-            RUN_CHAPEL=1
-            ;;
-        --call-only) echo "Running call only variant";
-            RUN_CALL_ONLY=1
-            ;;
-        --chapel-fast) echo "Running chapel fast variant";
-            RUN_CHAPEL_FAST=1
-            ;;
-        --append) echo "Appending to results file";
-            APPEND=1
-            ;;
-        --outfile) echo "Writing to $2";
-            RESULT_NAME=$2
-            shift
-            ;;
-        --n) echo "running $2 times";
-            NUMRUNS=$2; shift
-            ;;
-        *) echo "argument $1"
-            ;;
-    esac
-    shift
-done
-RUNSEQ=$(seq 1 $NUMRUNS)
-
+#
+#Actual Script
+#
 echo "Creating results file..."
 RESULTS_FILE=$LAUNCH_DIR/$RESULT_NAME
 if [[ $APPEND -eq 0 ]]; then
@@ -183,7 +227,6 @@ if [[ $RUN_ORIGINAL -eq 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example original
-
     
     echo "Done running original variant."
 fi
@@ -210,7 +253,6 @@ if [[ $RUN_CHAPEL = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel"
-    check_correctness
 
 fi 
 
@@ -221,12 +263,8 @@ if [[ $RUN_CHAPEL_FAST = 1 ]]; then
     build_chapel_modules --fast
 
 
-    echo "Clearing build for chapel variant..."
-    cd $PARFLOW_DIR/build
-    rm -rf ./*
-
     echo "Configuring..."
-    $CMAKE_CHAPEL
+    configure_parflow --chapel
 
     echo "Building..."
     build_parflow
@@ -236,7 +274,6 @@ if [[ $RUN_CHAPEL_FAST = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel-fast"
-    check_correctness
 fi
 
 if [[ $RUN_CALL_ONLY -eq 1 ]]; then

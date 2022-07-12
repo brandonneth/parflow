@@ -1947,13 +1947,15 @@ void    RichardsJacobianEval(
 //#endif */
     });
   }
-  #define PARFLOW_CHECK_CORRECTNESS
   #ifdef PARFLOW_CHECK_CORRECTNESS
+  static int pass_num = -1;
+  pass_num += 1;
   FILE * f = fopen("cp.out", "a");
+  int index_counter = 0;
   for(double * ptr = cp; ptr < up; ptr++) {
-    fprintf(f, "%f ", *ptr);
+    fprintf(f, "%d %d %f\n", pass_num, index_counter, *ptr);
+    index_counter += 1;
   };
-  fprintf(f, "\n");
   fclose(f);
   #endif
 
