@@ -774,7 +774,7 @@ void         PhaseRelPerm(
                 calcfcn_compute_vang_curve_surface(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
                 #endif
                 #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
-                fprintf(stderr, "running macro.\n");
+                //fprintf(stderr, "running macro.\n");
                 GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {

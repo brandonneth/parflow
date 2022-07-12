@@ -5,7 +5,7 @@ use phase_rel_perm_chapel;
 proc mean(a,b) { return (a+b) / 2;}
 
 //config const dataParMinGranularity = 1000;
-//config const dataParTasksPerLocale = 32;
+//config const dataParTasksPerLocale = 2;
 proc harmonic_mean(a,b) {
     if (a + b == 0) {
         return 0;
@@ -41,11 +41,11 @@ proc RPMean(a,b,c,d) {
 //Corresponds to the GrGeomInLoop call on line 599 in richards_jacobian_eval.c
 export proc richards_gravity_and_second_order_derivative_interior(ref gr_domain: GrGeomSolid,
 r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, //args for the iteration
- pp: [] real, dp: [] real, rpp: [] real, ddp: [] real, rpdp: [] real, //presure, density, relperm, derivatives therein
-permxp: [] real, permyp: [] real, permzp: [] real, //permeabilities
-fb_x : [] real, fb_y: [] real, fb_z: [] real, //FB data (not exactly sure what FB means)
-x_ssl: [] real, y_ssl: [] real, z_mult: [] real, //x and y slopes and variable dz
-J: [] real, cp: [] real, wp: [] real, ep: [] real, sop: [] real, np: [] real, lp: [] real, up: [] real, // jacobian submatrix stencils
+ pp: c_ptr(real), dp: c_ptr(real), rpp: c_ptr(real), ddp: c_ptr(real), rpdp: c_ptr(real), //presure, density, relperm, derivatives therein
+permxp: c_ptr(real), permyp: c_ptr(real), permzp: c_ptr(real), //permeabilities
+fb_x : c_ptr(real), fb_y: c_ptr(real), fb_z: c_ptr(real), //FB data (not exactly sure what FB means)
+x_ssl: c_ptr(real), y_ssl: c_ptr(real), z_mult: c_ptr(real), //x and y slopes and variable dz
+J: c_ptr(real), cp: c_ptr(real), wp: c_ptr(real), ep: c_ptr(real), sop: c_ptr(real), np: c_ptr(real), lp: c_ptr(real), up: c_ptr(real), // jacobian submatrix stencils
 grid2d_iz: int, dx: int, dy: int, dz: int, dt: int, sy_v: int, sz_v: int, sy_m: int, sz_m: int,//scalar parameters, sizes, etc
 tfgupwind: int, gravity: real, viscosity: real, // other scalars
 pix: int, piy: int, piz: int, pnx: int, pny: int,
@@ -57,19 +57,16 @@ symm_part: int
     if(call_only) {
         return;
     }
-    
-    writeln("chapel richards gravity interior.");
     var ffx = dy * dz;
     var ffy = dx * dz;
     var ffz = dx * dy;
-    writeln("sy_m and sz_m:", sy_m, " ", sz_m);
-    writeln("im params:", jix, " ", jiy, " ", jiz, " ", jnx, " ", jny);
+    
     for (xl,xu,yl,yu,zl,zu) in GrGeomInLoop_iter(gr_domain, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
         var mod: domain(3) = {zl..zu,yl..yu,xl..xu};
 
 
-        forall (k,j,i) in mod {
+        for (i,j,k) in dom {
             
             
             var ip = subvector_elt_index(i,j,k,pix,piy,piz,pnx,pny);
@@ -210,12 +207,11 @@ symm_part: int
                                 * RPMean(lower_cond, upper_cond, prod,
                                         prod_up)))
                         + sym_upper_temp;
-            /*
+            
             cp[im] += -(west_temp + south_temp + lower_temp);
             cp[im + 1] += -east_temp;
             cp[im + sy_m] += -north_temp;
             cp[im + sz_m] += -upper_temp;   
-
             if(!symm_part) {
                 ep[im] += east_temp;
                 np[im] += north_temp;
@@ -228,10 +224,12 @@ symm_part: int
                 ep[im] += sym_east_temp;
                 np[im] += sym_north_temp;
                 up[im] += sym_upper_temp;
-            }    */     
+            }    
         }
     } //for in GrGoemInLoop_iter
 }//richards_gravity_and_second_order_derivative_interior
+
+
 
 export proc richards_gravity_and_second_order_derivative_interior_split(ref gr_domain: GrGeomSolid,
 r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, //args for the iteration
@@ -239,7 +237,7 @@ pp: [] real, dp: [] real, rpp: [] real, ddp: [] real, rpdp: [] real, //presure, 
 permxp: [] real, permyp: [] real, permzp: [] real, //permeabilities
 fb_x : [] real, fb_y: [] real, fb_z: [] real, //FB data (not exactly sure what FB means)
 x_ssl: [] real, y_ssl: [] real, z_mult: [] real, //x and y slopes and variable dz
-J: [] real, cp: [] real, wp: [] real, ep: [] real, sop: [] real, np: [] real, lp: [] real, up: [] real, // jacobian submatrix stencils
+J: [] real, cp: c_ptr(real), wp: [] real, ep: [] real, sop: [] real, np: [] real, lp: [] real, up: [] real, // jacobian submatrix stencils
 grid2d_iz: int, dx: int, dy: int, dz: int, dt: int, sy_v: int, sz_v: int, sy_m: int, sz_m: int,//scalar parameters, sizes, etc
 tfgupwind: int, gravity: real, viscosity: real, // other scalars
 pix: int, piy: int, piz: int, pnx: int, pny: int,
@@ -459,7 +457,7 @@ pp: [] real, dp: [] real, rpp: [] real, ddp: [] real, rpdp: [] real, //presure, 
 permxp: [] real, permyp: [] real, permzp: [] real, //permeabilities
 fb_x : [] real, fb_y: [] real, fb_z: [] real, //FB data (not exactly sure what FB means)
 x_ssl: [] real, y_ssl: [] real, z_mult: [] real, //x and y slopes and variable dz
-J: [] real, cp: [] real, wp: [] real, ep: [] real, sop: [] real, np: [] real, lp: [] real, up: [] real, // jacobian submatrix stencils
+J: [] real, cp: c_ptr(real), wp: [] real, ep: [] real, sop: [] real, np: [] real, lp: [] real, up: [] real, // jacobian submatrix stencils
 grid2d_iz: int, dx: int, dy: int, dz: int, dt: int, sy_v: int, sz_v: int, sy_m: int, sz_m: int,//scalar parameters, sizes, etc
 tfgupwind: int, gravity: real, viscosity: real, // other scalars
 pix: int, piy: int, piz: int, pnx: int, pny: int,
@@ -483,9 +481,9 @@ symm_part: int
         var x_dist = xu - xl + 1;
         var y_dist = yu - yl + 1;
         var z_dist = zu - zl + 1;
-        const nti = 4;
-        const ntj = 4;
-        const ntk = 4;
+        const nti = 8;
+        const ntj = 8;
+        const ntk = 8;
         writeln("entire bounds:", xl, " ", xu, " ", yl, " ", yu, " ", zl, " ", zu, " ");
         var tile_size_x = x_dist / nti;
         var tile_size_y = y_dist / ntj;

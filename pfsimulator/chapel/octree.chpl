@@ -90,8 +90,7 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
                 if((i >= ix) && (i < (ix + nx)) && (j >= iy) && (j < (iy + ny)) && (k >= iz) && (k < (iz + nz))) {
                     for f in 0..<GrGeomOctreeNumFaces {
                         if (GrGeomOctreeHasFace(node,f)) {
-                            var fdir: [0..2] int = create_fdir(f);
-                            yield(i,i,j,j,k,k,fdir);
+                            yield(i,i,j,j,k,k,f);
                         }
                     }
                 }
@@ -107,9 +106,9 @@ iter GrGeomOctreeInsideLoop(in i: int, in j: int, in k: int, root: GrGeomOctree,
                 var zhi = min(iz+nz,k+increment);
                 for f in 0..<GrGeomOctreeNumFaces {
                         if (GrGeomOctreeHasFace(node,f)) {
-                            var fdir: [0..2] int = create_fdir(f);
+                            //var fdir: [0..2] int = create_fdir(f);
                             //the C code does < checks rather than <= checks.
-                            yield(xlo,xhi-1,ylo,yhi-1,zlo,zhi-1,fdir);
+                            yield(xlo,xhi-1,ylo,yhi-1,zlo,zhi-1,f);
                         }
                     }
             }
@@ -223,7 +222,9 @@ iter GrGeomOctreeInteriorLoop(in i: int, in j: int, in k: int, root: GrGeomOctre
 }
 
 iter GrGeomOctreeFaceLoop_iter(i: int, j: int, k: int, in root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-    for space in GrGeomOctreeInsideLoop(i,j,k,root,level_of_interest,ix,iy,iz,nx,ny,nz) {
-        yield space;
+    for (il,iu,jl,ju,kl,ku,f) in GrGeomOctreeInsideLoop(i,j,k,root,level_of_interest,ix,iy,iz,nx,ny,nz) {
+        var fdir: [0..2] int = create_fdir(f);
+        yield (il,iu,jl,ju,kl,ku,fdir);
    }
 }
+

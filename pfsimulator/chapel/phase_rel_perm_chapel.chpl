@@ -47,7 +47,6 @@ export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, i
     if(call_only) {
         return;
     }
-    writeln("Amount of parallelism: ", here.maxTaskPar);
     for (xl,xu,yl,yu,zl,zu,fdir) in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
         //writeln("domain size:", dom.size);

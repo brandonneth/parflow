@@ -78,6 +78,7 @@ echo -n "${RE_VARIANT_NAME}," >> $RESULTS_FILE
 
 for i in $RUNSEQ
 do
+    rm Outputs/cp.out
     echo "${RE_VARIANT_NAME}, run $i"
     tclsh $LW
 
@@ -88,6 +89,16 @@ do
     echo -n " $EXEC_TIME," >> $RESULTS_FILE
 done
 echo >> $RESULTS_FILE
+
+
+}
+
+check_correctness() {
+    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
+    diff Outputs/cp.out correct_output/cp.out >> correctness_diff 
+    if [ -s correctness_diff ]; then
+        echo "Correctness check failed."
+    fi
 }
 
 
@@ -106,27 +117,27 @@ CMAKE_CHAPEL="${CMAKE_ORIGINAL} -DPARFLOW_HAVE_CHAPEL=ON"
 echo "Reading command line arguments..."
 
 LW="LW_Tiny.tcl"
-RUN_ORIGINAL=1
-RUN_CHAPEL=1
-RUN_CALL_ONLY=1
-RUN_CHAPEL_FAST=1
+RUN_ORIGINAL=0
+RUN_CHAPEL=0
+RUN_CALL_ONLY=0
+RUN_CHAPEL_FAST=0
 APEEND=0
 RESULT_NAME=performance-evaluation.results
 NUMRUNS=2
 while test $# -gt 0
 do
     case "$1" in
-        --no-original) echo "Not running original variant";
-            RUN_ORIGINAL=0
+        --original) echo "Running original variant";
+            RUN_ORIGINAL=1
             ;;
-        --no-chapel) echo "Not running chapel variant";
-            RUN_CHAPEL=0
+        --chapel) echo "Running chapel variant";
+            RUN_CHAPEL=1
             ;;
-        --no-call-only) echo "Not running call only variant";
-            RUN_CALL_ONLY=0
+        --call-only) echo "Running call only variant";
+            RUN_CALL_ONLY=1
             ;;
-        --no-chapel-fast) echo "Not running chapel fast variant";
-            RUN_CHAPEL_FAST=0
+        --chapel-fast) echo "Running chapel fast variant";
+            RUN_CHAPEL_FAST=1
             ;;
         --append) echo "Appending to results file";
             APPEND=1
@@ -173,6 +184,7 @@ if [[ $RUN_ORIGINAL -eq 1 ]]; then
     echo "Preparing to run Little Washita Example..."
     run_example original
 
+    
     echo "Done running original variant."
 fi
 
@@ -198,6 +210,7 @@ if [[ $RUN_CHAPEL = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel"
+    check_correctness
 
 fi 
 
@@ -223,6 +236,7 @@ if [[ $RUN_CHAPEL_FAST = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel-fast"
+    check_correctness
 fi
 
 if [[ $RUN_CALL_ONLY -eq 1 ]]; then
@@ -240,7 +254,6 @@ if [[ $RUN_CALL_ONLY -eq 1 ]]; then
 
     echo "Building..."
     make -j8
-
     echo "Installing..."
     make install
 

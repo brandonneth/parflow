@@ -600,39 +600,39 @@ void    RichardsJacobianEval(
     FBz_dat = SubvectorData(FBz_sub);
 
     #if defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
-    chpl_external_array pp_chapel = chpl_make_external_array_ptr(p_sub->data, p_sub->data_size);
-    chpl_external_array dp_chapel = chpl_make_external_array_ptr(d_sub->data, d_sub->data_size);
-    chpl_external_array rpp_chapel = chpl_make_external_array_ptr(rp_sub->data, rp_sub->data_size);
-    chpl_external_array ddp_chapel = chpl_make_external_array_ptr(dd_sub->data, dd_sub->data_size);
-    chpl_external_array rpdp_chapel = chpl_make_external_array_ptr(rpd_sub->data, rpd_sub->data_size);
+    real * pp_chapel = p_sub->data;
+    real * dp_chapel = d_sub->data;
+    real * rpp_chapel = rp_sub->data;
+    real * ddp_chapel = dd_sub->data;
+    real * rpdp_chapel = rpd_sub->data;
     
-    chpl_external_array permxp_chapel = chpl_make_external_array_ptr(permx_sub->data, permx_sub->data_size);
-    chpl_external_array permyp_chapel = chpl_make_external_array_ptr(permy_sub->data, permy_sub->data_size);
-    chpl_external_array permzp_chapel = chpl_make_external_array_ptr(permz_sub->data, permz_sub->data_size);
+    real * permxp_chapel = permx_sub->data;
+    real * permyp_chapel = permy_sub->data;
+    real * permzp_chapel = permz_sub->data;
 
-    chpl_external_array fb_x_chapel = chpl_make_external_array_ptr(FBx_sub->data, FBx_sub->data_size);
-    chpl_external_array fb_y_chapel = chpl_make_external_array_ptr(FBy_sub->data, FBy_sub->data_size);
-    chpl_external_array fb_z_chapel = chpl_make_external_array_ptr(FBz_sub->data, FBz_sub->data_size);
+    real * fb_x_chapel = FBx_sub->data;
+    real * fb_y_chapel = FBy_sub->data;
+    real * fb_z_chapel = FBz_sub->data;
 
-    chpl_external_array x_ssl_chapel = chpl_make_external_array_ptr(x_ssl_sub->data, x_ssl_sub->data_size);
-    chpl_external_array y_ssl_chapel = chpl_make_external_array_ptr(y_ssl_sub->data, y_ssl_sub->data_size);
-    chpl_external_array z_mult_chapel = chpl_make_external_array_ptr(z_mult_sub->data, z_mult_sub->data_size);
+    real * x_ssl_chapel = x_ssl_sub->data;
+    real * y_ssl_chapel = y_ssl_sub->data;
+    real * z_mult_chapel = z_mult_sub->data;
 
-    chpl_external_array J_chapel = chpl_make_external_array_ptr(J_sub->data, J_sub->data_size);
-    chpl_external_array cp_chapel = chpl_make_external_array_ptr(cp, J_sub->data_size);
-    chpl_external_array wp_chapel = chpl_make_external_array_ptr(wp, J_sub->data_size);
-    chpl_external_array ep_chapel = chpl_make_external_array_ptr(ep, J_sub->data_size);
-    chpl_external_array sop_chapel = chpl_make_external_array_ptr(sop, J_sub->data_size);
-    chpl_external_array np_chapel = chpl_make_external_array_ptr(np, J_sub->data_size);
-    chpl_external_array lp_chapel = chpl_make_external_array_ptr(lp, J_sub->data_size);
-    chpl_external_array up_chapel = chpl_make_external_array_ptr(up, J_sub->data_size);
+    real * J_chapel = J_sub->data;
+    real * cp_chapel = cp;
+    real * wp_chapel = wp;
+    real * ep_chapel = ep;
+    real * sop_chapel = sop;
+    real * np_chapel = np;
+    real * lp_chapel = lp;
+    real * up_chapel = up;
     richards_gravity_and_second_order_derivative_interior(
       gr_domain, r, ix, iy, iz, nx, ny, nz,
-      &pp_chapel, &dp_chapel, &rpp_chapel, &ddp_chapel, &rpdp_chapel,
-      &permxp_chapel, &permyp_chapel, &permzp_chapel,
-      &fb_x_chapel, &fb_y_chapel, &fb_z_chapel,
-      &x_ssl_chapel, &y_ssl_chapel, &z_mult_chapel,
-      &J_chapel,&cp_chapel,&wp_chapel,&ep_chapel,&sop_chapel,&np_chapel,&lp_chapel,&up_chapel,
+      pp_chapel, dp_chapel, rpp_chapel, ddp_chapel, rpdp_chapel,
+      permxp_chapel, permyp_chapel, permzp_chapel,
+      fb_x_chapel, fb_y_chapel, fb_z_chapel,
+      x_ssl_chapel, y_ssl_chapel, z_mult_chapel,
+      J_chapel,cp, wp_chapel,ep_chapel,sop_chapel,np_chapel,lp_chapel,up_chapel,
       grid2d_iz, dx,dy,dz,dt,sy_v, sz_v, sy_m, sz_m,
       public_xtra->tfgupwind, gravity, viscosity,
       SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
@@ -817,16 +817,19 @@ void    RichardsJacobianEval(
         PlusEquals(sop[im + sy_m], south_temp);
         PlusEquals(lp[im + sz_m], lower_temp);
       }
-      else     /* Symmetric matrix: just update upper coeffs */
+      else    
       {
         PlusEquals(ep[im], sym_east_temp);
         PlusEquals(np[im], sym_north_temp);
         PlusEquals(up[im], sym_upper_temp);
       }
+      
+
+     
     });
     #endif
   }  //
-
+  
   /*  Calculate correction for boundary conditions */
 
   if (symm_part)
@@ -1944,7 +1947,15 @@ void    RichardsJacobianEval(
 //#endif */
     });
   }
-
+  #define PARFLOW_CHECK_CORRECTNESS
+  #ifdef PARFLOW_CHECK_CORRECTNESS
+  FILE * f = fopen("cp.out", "a");
+  for(double * ptr = cp; ptr < up; ptr++) {
+    fprintf(f, "%f ", *ptr);
+  };
+  fprintf(f, "\n");
+  fclose(f);
+  #endif
 
   /*-----------------------------------------------------------------------
    * Update matrix ghost points

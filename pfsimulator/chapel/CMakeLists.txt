@@ -11,6 +11,6 @@ set (CHPL_LINK_LIBRARIES chpl gmp hwloc jemalloc re2 m numa pthread qthread chap
 
 #for a target named tgt, add the following lines:
 #include(<Path to this file>)
-#target_include_directories(tgt $CHPL_INCLUDE_DIRECTORIES)
-#target_link_directories(tgt $CHPL_LINK_DIRECTORIES)
+#target_include_directories(tgt PRIVATE $CHPL_INCLUDE_DIRECTORIES)
+#target_link_directories(tgt PRIVATE $CHPL_LINK_DIRECTORIES)
 #target_link_libraries(tgt $CHPL_LINK_LIBRARIES)
