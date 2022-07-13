@@ -1060,8 +1060,8 @@ void    RichardsJacobianEval(
     sy_v = nx_v;
     sz_v = ny_v * nx_v;
 
-    cp = SubmatrixStencilData(J_sub, 0);
-    wp = SubmatrixStencilData(J_sub, 1);
+
+    cp = SubmatrixStencilData(J_sub, 0);    wp = SubmatrixStencilData(J_sub, 1);
     ep = SubmatrixStencilData(J_sub, 2);
     sop = SubmatrixStencilData(J_sub, 3);
     np = SubmatrixStencilData(J_sub, 4);
@@ -1098,6 +1098,31 @@ void    RichardsJacobianEval(
     {
       bc_patch_values = BCStructPatchValues(bc_struct, ipatch, is);
 
+      #ifdef PARFLOW_HAVE_CHAPEL
+      ThisPFModule = density_module;
+      PhaseDensityConstants(0, CALCFCN, &phase_type,
+                            &fcn_phase_const,
+                            &phase_ref,
+                            &phase_comp);
+      PhaseDensityConstants(0, CALCDER, &phase_type,
+                            &der_phase_const,
+                            &phase_ref,
+                            &phase_comp);
+      dirichlet_bc_correction(ival, *bc_struct, ipatch, is, 
+        BCStructGrDomain(bc_struct), 
+        r, ix, iy,iz,nx,ny,nz,
+        pp,dp,rpp,ddp,rpdp,
+        permxp, permyp,permzp,
+        z_mult_dat, 
+        cp,wp,ep,sop,np,lp,up,
+        dx,dy,dz,dt, sy_v, sz_v, sy_m, sz_m, 
+        gravity, viscosity,
+        SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
+        SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
+        phase_type, fcn_phase_const, phase_ref, phase_comp,
+        bc_patch_values);
+      #else
+     // #else ifndef PARFLOW_HAVE_CHAPEL 
       ForPatchCellsPerFace(DirichletBC,
                            BeforeAllCells(
                            {
@@ -1239,7 +1264,7 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
-
+      #endif
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),

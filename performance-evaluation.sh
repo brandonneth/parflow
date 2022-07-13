@@ -63,6 +63,7 @@ do
             NUMRUNS=$2; shift
             ;;
         --check-correctness) echo "Checking correctness for executed variants.";
+            spack load numdiff
             CHECK_CORRECTNESS=1
             ;;
         *) echo "argument $1"
@@ -97,7 +98,13 @@ configure_parflow() {
     cd $PARFLOW_DIR
     cd build
     rm -rf ./*
-    cmake $CMAKE_DEFS ..
+    
+    if cmake $CMAKE_DEFS .. ; then 
+        echo "Configure successful."
+    else
+        echo "Configure failed."
+        exit 3
+    fi
 }
 #
 #Functions

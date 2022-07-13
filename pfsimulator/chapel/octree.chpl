@@ -228,3 +228,9 @@ iter GrGeomOctreeFaceLoop_iter(i: int, j: int, k: int, in root: GrGeomOctree, le
    }
 }
 
+iter GrGeomOctreeFaceLoopNoFdir_iter(i: int, j: int, k: int, in root: GrGeomOctree, level_of_interest: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
+    for (il,iu,jl,ju,kl,ku,f) in GrGeomOctreeInsideLoop(i,j,k,root,level_of_interest,ix,iy,iz,nx,ny,nz) {
+        yield (il,iu,jl,ju,kl,ku,f);
+   }
+}
+

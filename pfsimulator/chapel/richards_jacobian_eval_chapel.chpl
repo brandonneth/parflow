@@ -1,6 +1,8 @@
 use grgeom;
 use CTypes;
 use phase_rel_perm_chapel;
+use boundary_conditions;
+use octree;
 //config param call_only = 0;
 proc mean(a,b) { return (a+b) / 2;}
 
@@ -929,3 +931,140 @@ symm_part: int
             
     }
 }//richards_gravity_and_second_order_derivative_interior_overlapped_tiled
+
+
+
+export proc dirichlet_bc_correction (ival: int, in bc_struct: BCStruct, ipatch: int, is: int,
+ref gr_domain: GrGeomSolid,
+r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, //args for the iteration
+ pp: c_ptr(real), dp: c_ptr(real), rpp: c_ptr(real), ddp: c_ptr(real), rpdp: c_ptr(real), //presure, density, relperm, derivatives therein
+permxp: c_ptr(real), permyp: c_ptr(real), permzp: c_ptr(real), //permeabilities
+z_mult_dat: c_ptr(real), //x and y slopes and variable dz
+cp: c_ptr(real), wp: c_ptr(real), ep: c_ptr(real), sop: c_ptr(real), np: c_ptr(real), lp: c_ptr(real), up: c_ptr(real), // jacobian submatrix stencils
+dx: int, dy: int, dz: int, dt: int, sy_v: int, sz_v: int, sy_m: int, sz_m: int,//scalar parameters, sizes, etc
+gravity: real, viscosity: real, // other scalars
+pix: int, piy: int, piz: int, pnx: int, pny: int,
+jix: int, jiy: int, jiz: int, jnx: int, jny: int,
+phase_type: int, fcn_phase_const: real, phase_ref: real, phase_comp: real,
+bc_patch_values: c_ptr(real)
+) {
+     var ffx = dy * dz;
+    var ffy = dx * dz;
+    var ffz = dx * dy;
+    
+    if (bc_struct.bc_types[ipatch] != DirichletBC && bc_struct.bc_types[ipatch] != BC_ALL) {
+        return;
+    }
+    
+    //before_loop;
+    //Remember to set up the phase density constant variables before calling this function
+
+    //body thing
+    var patch_index = bc_struct.patch_indexes[ipatch];
+    
+    for (il,iu,jl,ju,kl,ku,f) in GrGeomPatchLoopNoFdir_iter(gr_domain, patch_index, 0, r, ix, iy, iz, nx, ny, nz) {
+        var dom: domain(3) = {il..iu,jl..ju,kl..ku};
+        for (i,j,k) in dom {
+            //setup
+            var ip = subvector_elt_index(i,j,k,pix,piy,piz,pnx,pny);
+            var im = subvector_elt_index(i,j,k,jix,jiy,jiz,jnx,jny);
+            var value = bc_patch_values[ival];
+            var op: c_ptr(real) = nil;
+            var coeff = 0.0;
+            var diff = 0.0;
+            var o_temp = 0.0;
+            var prod_val = 0.0;
+            var lower_cond = 0.0;
+            var upper_cond = 0.0;
+
+            //todo: get dend and den
+            var den_d = 0.0;
+            if (phase_type == 0) {
+                den_d = fcn_phase_const;
+            } else {
+                den_d = phase_ref * e ** (value * phase_comp);
+            }
+
+            var prod = rpp[ip] * dp[ip];
+            var prod_der = rpdp[ip] * dp[ip] + rpp[ip] * ddp[ip];
+            //switch on face
+            select f {
+                when GrGeomOctreeFaceL {
+                    op = wp;
+                    coeff = dt * ffx * z_mult_dat[ip] * (2.0 / dx) * permxp[ip] / viscosity;
+                    prod_val = rpp[ip - 1] * den_d;
+                    diff = value - pp[ip];
+                    o_temp = coeff * (diff * RPMean(value, pp[ip], 0.0, prod_der) - RPMean(value, pp[ip], prod_val, prod));
+                }
+                when GrGeomOctreeFaceR {
+                    op = ep;
+                    coeff = dt * ffx * z_mult_dat[ip] * (2.0 / dx) * permxp[ip] / viscosity;
+                    prod_val = rpp[ip + 1] * den_d;
+                    diff = pp[ip] - value;
+                    o_temp = -coeff
+                            * (diff * RPMean(pp[ip], value, prod_der, 0.0)
+                                + RPMean(pp[ip], value, prod, prod_val));
+                }
+                when GrGeomOctreeFaceD {
+                    op = sop;
+                    coeff = dt * ffy * z_mult_dat[ip] * (2.0 / dy) * permyp[ip] / viscosity;
+                    prod_val = rpp[ip - sy_v] * den_d;
+                    diff = value - pp[ip];
+                    o_temp = coeff
+                            * (diff * RPMean(value, pp[ip], 0.0, prod_der)
+                                - RPMean(value, pp[ip], prod_val, prod));
+                }
+                when GrGeomOctreeFaceU {
+                    op = np;
+                    coeff = dt * ffy * z_mult_dat[ip] * (2.0 / dy) * permyp[ip] / viscosity;
+                    prod_val = rpp[ip + sy_v] * den_d;
+                    diff = pp[ip] - value;
+                    o_temp = -coeff
+                            * (diff * RPMean(pp[ip], value, prod_der, 0.0)
+                                + RPMean(pp[ip], value, prod, prod_val));
+                }
+
+                when GrGeomOctreeFaceB {
+                    coeff = dt * ffz * (2.0 / (dz * Mean(z_mult_dat[ip], z_mult_dat[ip + sz_v])))
+                                     * permzp[ip] / viscosity;
+                    op = lp;
+                    prod_val = rpp[ip - sz_v] * den_d;
+
+                    lower_cond = (value) - 0.5 * dz * z_mult_dat[ip] * den_d * gravity;
+                    upper_cond = (pp[ip]) + 0.5 * dz * z_mult_dat[ip] * dp[ip] * gravity;
+                    diff = lower_cond - upper_cond;
+
+                    o_temp = coeff
+                            * (diff * RPMean(lower_cond, upper_cond, 0.0, prod_der)
+                                + ((-1.0 - gravity * 0.5 * dz * z_mult_dat[ip] * ddp[ip])
+                                * RPMean(lower_cond, upper_cond, prod_val, prod)));
+                }
+
+                when GrGeomOctreeFaceF {
+                    coeff = dt * ffz * (2.0 / (dz * Mean(z_mult_dat[ip], z_mult_dat[ip + sz_v])))
+                                     * permzp[ip] / viscosity;
+
+                    op = up;
+                    prod_val = rpp[ip + sz_v] * den_d;
+
+                    lower_cond = (pp[ip]) - 0.5 * dz * z_mult_dat[ip] * dp[ip] * gravity;
+                    upper_cond = (value) + 0.5 * dz * z_mult_dat[ip] * den_d * gravity;
+                    diff = lower_cond - upper_cond;
+
+                    o_temp = -coeff * (diff * RPMean(lower_cond, upper_cond, prod_der, 0.0)
+                                    + ((1.0 - gravity * 0.5 * dz * z_mult_dat[ip] * ddp[ip])
+                                        * RPMean(lower_cond, upper_cond, prod, prod_val)));
+                }
+            }//select on face
+
+
+
+            //finalize
+            cp[im] += op[im];
+            cp[im] -= o_temp;
+            op[im] = 0.0;
+        }
+    }
+
+    //after_loop;*/
+}
