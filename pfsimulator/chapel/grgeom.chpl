@@ -10,143 +10,82 @@ extern type Point = 3*int(32);
 extern record Box {
     var lo: Point;
     var up: Point;
+
+    proc dom() { return {lo[0]..up[0],lo[1]..up[1],lo[2]..up[2]}; }
+
+    iter points(param tag: iterKind) where tag == iterKind.standalone {
+        forall point in dom() do yield point;
+    }
 };
 
 extern record BoxArray {
   var boxes : c_ptr(Box);
   var boxlimits : c_ptr(c_int);
   var size : c_uint;
+
+  iter these(param tag: iterKind) where tag == iterKind.standalone
+  {
+    forall i in 0..<size do
+        yield boxes[i];
+  }
+  iter these()
+  {
+    for i in 0..<size do
+        yield boxes[i];
+  }
+
+
 }
 
 extern record GrGeomSolid {
     var data: c_ptr(GrGeomOctree);
     var patches: c_ptr(c_ptr(GrGeomOctree));
     var octree_bg_level, octree_ix, octree_iy, octree_iz: int;
-    
     var interior_boxes: c_ptr(BoxArray);
     var surface_boxes : c_ptr(c_ptr(BoxArray));
     var patch_boxes : c_ptr(c_ptr(c_ptr(BoxArray)));
-    
+
+    proc interiorBoxes() { return interior_boxes[0]; }
+
+    proc surfaceBoxes(face: int) { return surface_boxes[face][0]; }
+
+    proc patchBoxes(face: int, patchNum: int) { return patch_boxes[face][patchNum][0]; }
 }
 
 
-iter GrGeomInLoopBoxes_iter(ref grgeom: GrGeomSolid, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-
-        var boxes = grgeom.interior_boxes[0];
-        //writeln("boxes:", boxes);
-        if boxes.size == 0 then return;
-        for i in 0..<boxes.size {
-            var box = boxes.boxes[i];
-            var xlo = max(ix, box.lo[0]);
-            var ylo = max(iy, box.lo[1]);
-            var zlo = max(iz, box.lo[2]);
-            var xhi = min(ix + nx -1, box.up[0]);
-            var yhi = min(iy + ny -1, box.up[1]);
-            var zhi = min(iz + nz -1, box.up[2]);
-            //writeln(xlo, " ", xhi, " ", ylo, " ", yhi, " ", zlo," ", zhi);
-            yield(xlo,xhi,ylo,yhi,zlo,zhi);
+iter groundGeometryPatchBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, patchNum: int, minPoint: Point, maxPoint: Point)
+    where tag == iterKind.standalone
+{
+    forall f in 0..<GrGeomOctreeNumFaces {
+        const boxArray = groundGeometry.patchBoxes(f,patchNum);
+        forall boxIndex in 0..<boxArray.size {
+            const box = boxArray.boxes[boxIndex];
+            var low: Point = max(minPoint, box.lo);
+            var high: Point = min(maxPoint, box.up);
+            var points: domain(3) = {low[0]..high[0],low[1]..high[1],low[2]..high[2]};
+            forall (i,j,k) in points do
+                yield (i,j,k,f);
         }
-    //writeln("done yielding");
+    }
 }
 
-iter GrGeomSurfLoopBoxes_iter(ref grgeom: GrGeomSolid, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
+iter groundGeometryInteriorBoxes(ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) {
+    for box in groundGeometry.interiorBoxes() do
+        for point in box.dom()[outerDom] do
+            yield point;
+}
+
+iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, minPoint: Point, maxPoint: Point) {
     for f in 0..<GrGeomOctreeNumFaces {
         var fdir: [0..2] int = create_fdir(f);
-        var boxes = grgeom.surface_boxes[f][0];
-        //writeln("boxes:", boxes);
-        if boxes.size == 0 then continue;
-        for i in 0..<boxes.size {
-            var box = boxes.boxes[i];
-            var xlo = max(ix, box.lo[0]);
-            var ylo = max(iy, box.lo[1]);
-            var zlo = max(iz, box.lo[2]);
-            var xhi = min(ix + nx -1, box.up[0]);
-            var yhi = min(iy + ny -1, box.up[1]);
-            var zhi = min(iz + nz -1, box.up[2]);
-            //writeln(xlo, " ", xhi, " ", ylo, " ", yhi, " ", zlo," ", zhi);
-            yield(xlo,xhi,ylo,yhi,zlo,zhi,fdir);
+        const boxArray = groundGeometry.surface_boxes[f][0];
+        for boxIndex in 0..<boxArray.size {
+            const box = boxArray.boxes[boxIndex];
+            var low: Point = max(minPoint, box.lo);
+            var high: Point = min(maxPoint, box.up);
+            var points: domain(3) = {low[0]..high[0],low[1]..high[1],low[2]..high[2]};
+            for (i,j,k) in points do
+                yield (i,j,k,fdir);
         }
-    }
-    //writeln("done yielding");
-}
-
-
-iter GrGeomInLoop_iter(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-    if(r == 0 && grgeom.interior_boxes != nil) {
-
-        for space in GrGeomInLoopBoxes_iter(grgeom,ix,iy,iz,nx,ny,nz) {
-            yield space;
-        }
-    }
-    else {
-        
-        var offset = 2 ** r;
-        var i = grgeom.octree_ix * offset;
-        var j = grgeom.octree_iy * offset;
-        var k = grgeom.octree_iz * offset;
-        for space in GrGeomOctreeInteriorLoop(i,j,k, grgeom.data[0], r + grgeom.octree_bg_level, ix, iy, iz, nx, ny, nz) {
-            yield space;
-        }
-    }
-}
-
-iter GrGeomSurfLoop_iter(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-    if(r == 0 && grgeom.surface_boxes[5] != nil) {
-        //writeln("boxes.");
-        for space in GrGeomSurfLoopBoxes_iter(grgeom,ix,iy,iz,nx,ny,nz) {
-            yield space;
-        }
-    }
-    else {
-        //writeln("octree");
-        var offset = 2 ** r;
-        var i = grgeom.octree_ix * offset;
-        var j = grgeom.octree_iy * offset;
-        var k = grgeom.octree_iz * offset;
-        for space in GrGeomOctreeFaceLoop_iter(i,j,k, grgeom.data[0], r + grgeom.octree_bg_level, ix, iy, iz, nx, ny, nz) {
-            yield space;
-        }
-    }
-} 
-
-export proc GrGeomSurfLoop_chapel(ref grgeom: GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) { 
-    //writeln("About to iterate.");
-    for space in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
-        writeln(space);
-    }
-}
-
-
-iter GrGeomPatchLoopBoxesNoFdir(ref grgeom: GrGeomSolid, patch_num: int, ovrlnd: int,  r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-    for f in 0..<GrGeomOctreeNumFaces {
-        var boxes = grgeom.patch_boxes[f][patch_num][0];
-        for box_index in 0..<boxes.size {
-            var box = boxes.boxes[box_index];
-            var xlo = max(ix, box.lo[0]);
-            var ylo = max(iy, box.lo[1]);
-            var zlo = max(iz, box.lo[2]);
-            var xhi = min(ix + nx -1, box.up[0]);
-            var yhi = min(iy + ny -1, box.up[1]);
-            var zhi = min(iz + nz -1, box.up[2]);
-            //writeln(xlo, " ", xhi, " ", ylo, " ", yhi, " ", zlo," ", zhi);
-            yield(xlo,xhi,ylo,yhi,zlo,zhi,f);
-        }
-    }
-}
-
-
-iter GrGeomPatchLoopNoFdir_iter(ref grgeom: GrGeomSolid, patch_num: int, ovrlnd: int,  r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int) {
-    if(r == 0 && grgeom.patch_boxes[5][patch_num] != nil) {
-        for space in GrGeomPatchLoopBoxesNoFdir(grgeom, patch_num, ovrlnd, r, ix, iy, iz, nx, ny, nz) {
-            yield space;
-        }
-    } else {
-        var offset = 2 ** r;
-        var i = grgeom.octree_ix * offset;
-        var j = grgeom.octree_iy * offset;
-        var k = grgeom.octree_iz * offset; 
-        for space in GrGeomOctreeFaceLoopNoFdir_iter(i,j,k, grgeom.patches[patch_num][0], r + grgeom.octree_bg_level, ix, iy, iz, nx, ny, nz) {
-            yield space;
-        }   
     }
 }

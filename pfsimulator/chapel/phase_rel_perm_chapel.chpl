@@ -9,11 +9,8 @@ export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int,
     ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, 
     pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
     gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
-    if(call_only) {
-        return;
-    }
     
-
+    writeln("calcfcn_compute_vang_curve_surface");
     for (xl,xu,yl,yu,zl,zu,fdir) in GrGeomSurfLoop_iter(grgeom, r, ix, iy, iz, nx, ny, nz) {
         var dom: domain(3) = {xl..xu, yl..yu, zl..zu};
 
