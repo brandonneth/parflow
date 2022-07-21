@@ -31,7 +31,6 @@ echo "Reading command line arguments..."
 LW="LW_Tiny.tcl"
 RUN_ORIGINAL=0
 RUN_CHAPEL=0
-RUN_CALL_ONLY=0
 RUN_CHAPEL_FAST=0
 APEEND=0
 RESULT_NAME=performance-evaluation.results
@@ -43,11 +42,14 @@ do
         --original) echo "Running original variant";
             RUN_ORIGINAL=1
             ;;
+        --omp) echo "Running openmp variant";
+            RUN_OMP=1;
+            ;;
+        --cuda) echo "Running cuda variant";
+            RUN_CUDA=1;
+            ;;
         --chapel) echo "Running chapel variant";
             RUN_CHAPEL=1
-            ;;
-        --call-only) echo "Running call only variant";
-            RUN_CALL_ONLY=1
             ;;
         --chapel-fast) echo "Running chapel fast variant";
             RUN_CHAPEL_FAST=1
@@ -63,8 +65,14 @@ do
             NUMRUNS=$2; shift
             ;;
         --check-correctness) echo "Checking correctness for executed variants.";
-            spack load numdiff
             CHECK_CORRECTNESS=1
+            ;;
+        --lw) echo "Using LW input file $2"
+            LW=$2
+            shift
+            ;;
+        --new-correct) echo "Reseting correctness checking file."
+            NEW_CORRECT=1
             ;;
         *) echo "argument $1"
             ;;
@@ -74,8 +82,12 @@ done
 RUNSEQ=$(seq 1 $NUMRUNS)
 
 
+# Configures the parflow project using CMake. Supports optional arguments for 
+#  configuring with chapel (--chapel) and openmp (--omp). Configures for 
+#  correctness checks based on the CHECK_CORRECTNESS variable
 
 configure_parflow() {
+    pushd $PARFLOW_DIR/build
     CMAKE_DEFS="-DPARFLOW_HAVE_CLM=ON -DCMAKE_INSTALL_PREFIX=${PARFLOW_DIR} \
     -DSILO_ROOT=$HOME/silo -DHYPRE_ROOT=$HOME/hypre/src/hypre \
     -DPARFLOW_AMPS_LAYER=mpi1 -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
@@ -84,9 +96,10 @@ configure_parflow() {
     while test $# -gt 0
     do
         case "$1" in
-            --call-only) CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_CALL_ONLY=ON"
-                ;;
             --chapel) CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_HAVE_CHAPEL=ON"
+                ;;
+            --omp) CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_HAVE_OMP=ON"
+                ;;
         esac
         shift
     done
@@ -95,21 +108,24 @@ configure_parflow() {
         CMAKE_DEFS="$CMAKE_DEFS -DPARFLOW_CHECK_CORRECTNESS=ON"
     fi
 
-    cd $PARFLOW_DIR
-    cd build
+    
+    
     rm -rf ./*
     
     if cmake $CMAKE_DEFS .. ; then 
         echo "Configure successful."
     else
         echo "Configure failed."
+        echo "Configure Command: " cmake $CMAKE_DEFS ..
         exit 3
     fi
+    popd
 }
 #
 #Functions
 #
 build_parflow() {
+    pushd $PARFLOW_DIR/build
     BP_CMD="make -j16"
 
     if $BP_CMD ; then
@@ -118,10 +134,12 @@ build_parflow() {
         echo "Build failed."
         exit 2
     fi
+    popd
 }
 
-# Function Definitions
+
 build_chapel_modules() {
+    pushd $PARFLOW_DIR/pfsimulator/chapel
     BCM_FAST=0
     BCM_CALL_ONLY=0
     while test $# -gt 0
@@ -129,13 +147,9 @@ build_chapel_modules() {
         case "$1" in
             --fast) BCM_FAST=1;
                 ;;
-            --call-only) BCM_CALL_ONLY=1;
-                ;;
         esac
         shift
     done
-
-    cd $PARFLOW_DIR/pfsimulator/chapel
 
     BCM_INCLUDES="-I../parflow_lib -I../parflow_lib \
     -I ../amps/mpi1/ -I../../build/include/ -I../amps/common"
@@ -143,10 +157,6 @@ build_chapel_modules() {
     BCM_COMMAND="chpl $BCM_INCLUDES"
     if [[ $BCM_FAST -eq 1 ]]; then
         BCM_COMMAND="$BCM_COMMAND --fast "
-    fi
-
-    if [[ $BCM_CALL_ONLY -eq 1 ]]; then
-        BCM_COMMAND="$BCM_COMMAND --scall_only=1 "
     fi
 
     BCM_COMMAND="$BCM_COMMAND --library chapel_impl.chpl "
@@ -157,20 +167,28 @@ build_chapel_modules() {
         echo "Chapel module failed to build."
         exit
     fi
+    popd
 }
 
 check_correctness() {
+    if [[ $# -eq 1 ]]; then
+        CC_PREFIX=$1_
+    fi
+    DIFF_FILE= $LAUNCH_DIR/${CC_PREFIX}correctness_diff
     echo "Checking correctness..."
-    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
+    pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 
     
-    DIFF_CMD=$(numdiff -r 1e-5 -q Outputs/cp.out correct_output/cp.out)
-    if [ "$DIFF_CMD" ]; then
+    diff Outputs/cp.out correct_output/cp.out > $DIFF_FILE
+
+    DIFF=$(cat $DIFF_FILE)
+    if [ "$DIFF" ]; then
         echo "Correctness check failed."
-        echo "$DIFF_CMD" > $LAUNCH_DIR/correctness_diff
+       
     else
         echo "Correctness check passed."
     fi
+    popd
 }
 
 #Runs the example and saves the execution times. Name of the variant is 
@@ -178,7 +196,7 @@ check_correctness() {
 run_example() {
     RE_VARIANT_NAME=$1
 
-    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
+    pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 
     echo -n "${RE_VARIANT_NAME}," >> $RESULTS_FILE
 
@@ -197,11 +215,10 @@ run_example() {
     echo >> $RESULTS_FILE
 
     if [[ $CHECK_CORRECTNESS -eq 1 ]]; then
-        check_correctness
+        check_correctness $RE_VARIANT_NAME
     fi
-
+    popd
 }
-
 
 
 #
@@ -218,13 +235,17 @@ echo "Creating build directory..."
 cd $PARFLOW_DIR
 mkdir build
 
-if [[ $RUN_ORIGINAL -eq 1 ]]; then
+
+
+run_original() {
+    echo "Running original variant."
+
     cd build
     echo "Clearing build directory..."
     rm -rf ./*
 
     echo "Configuring..."
-    $CMAKE_ORIGINAL
+    configure_parflow
 
     echo "Building..."
     make -j8
@@ -236,10 +257,47 @@ if [[ $RUN_ORIGINAL -eq 1 ]]; then
     run_example original
     
     echo "Done running original variant."
+}
+
+if [[ $NEW_CORRECT -eq 1 ]]; then
+    CHECK_CORRECTNESS=1
+    run_original
+    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
+    cp Outputs/cp.out correct_output/cp.out
 fi
 
+if [[ $RUN_ORIGINAL -eq 1 ]]; then
+    run_original
+fi
 
-if [[ $RUN_CHAPEL = 1 ]]; then
+run_omp() {
+
+    echo "Running OpenMP Variant"
+    
+    cd $PARFLOW_DIR/build
+    echo "Clearing build directory..."
+    rm -rf ./*
+
+    echo "Configuring..."
+    configure_parflow --omp
+
+    echo "Building..."
+    make -j
+
+    echo "Installing..."
+    make install
+
+    echo "Preparing to run Little Washita Example..."
+    run_example openmp
+}
+
+if [[ $RUN_OMP -eq 1 ]]; then
+    run_omp
+fi
+
+run_chapel() {
+    echo
+    echo "Running Basic Chapel Variant."
 
     echo "Preparing chapel modules..."
     build_chapel_modules
@@ -260,10 +318,13 @@ if [[ $RUN_CHAPEL = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel"
+}
 
+if [[ $RUN_CHAPEL = 1 ]]; then
+    run_chapel
 fi 
 
-if [[ $RUN_CHAPEL_FAST = 1 ]]; then
+run_chapel_fast() {
     echo "Running Chapel --fast Variant"
 
     echo "Preparing chapel modules..."
@@ -281,26 +342,9 @@ if [[ $RUN_CHAPEL_FAST = 1 ]]; then
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel-fast"
+}
+
+if [[ $RUN_CHAPEL_FAST = 1 ]]; then
+    run_chapel_fast
 fi
 
-if [[ $RUN_CALL_ONLY -eq 1 ]]; then
-    echo "Running Call Only Variant"
-
-    echo "Preparing chapel modules..."
-    build_chapel_modules --call-only
-
-    cd $PARFLOW_DIR/build
-    echo "Clearing build directory..."
-    rm -rf ./*
-
-    echo "Configuring..."
-    $CMAKE_CHAPEL -DPARFLOW_CALL_ONLY=On
-
-    echo "Building..."
-    make -j8
-    echo "Installing..."
-    make install
-
-    echo "Preparing to run Little Washita Example..."
-    run_example "call-only"
-fi
