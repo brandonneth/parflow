@@ -134,6 +134,13 @@ build_parflow() {
         echo "Build failed."
         exit 2
     fi
+
+    if make install ; then
+        echo "Install successful."
+    else
+        echo "Install failed."
+        exit 2
+    fi
     popd
 }
 
@@ -248,10 +255,7 @@ run_original() {
     configure_parflow
 
     echo "Building..."
-    make -j8
-
-    echo "Installing..."
-    make install
+    build_parflow
 
     echo "Preparing to run Little Washita Example..."
     run_example original
@@ -281,11 +285,8 @@ run_omp() {
     echo "Configuring..."
     configure_parflow --omp
 
-    echo "Building..."
-    make -j
-
-    echo "Installing..."
-    make install
+    echo "Building and Installing"
+    build_parflow
 
     echo "Preparing to run Little Washita Example..."
     run_example openmp
@@ -308,13 +309,10 @@ run_chapel() {
     rm -rf ./*
 
     echo "Configuring..."
-    $CMAKE_CHAPEL
+    configure_parflow --chapel
 
-    echo "Building..."
-    make -j8
-
-    echo "Installing..."
-    make install
+    echo "Building and Installing"
+    build_parflow
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel"
@@ -336,9 +334,6 @@ run_chapel_fast() {
 
     echo "Building..."
     build_parflow
-
-    echo "Installing..."
-    make install
 
     echo "Preparing to run Little Washita Example..."
     run_example "chapel-fast"
