@@ -181,7 +181,7 @@ check_correctness() {
     if [[ $# -eq 1 ]]; then
         CC_PREFIX=$1_
     fi
-    DIFF_FILE= $LAUNCH_DIR/${CC_PREFIX}correctness_diff
+    DIFF_FILE=$LAUNCH_DIR/${CC_PREFIX}correctness_diff
     echo "Checking correctness..."
     pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 

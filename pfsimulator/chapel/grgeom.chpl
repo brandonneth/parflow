@@ -25,11 +25,13 @@ extern record BoxArray {
 
   iter these(param tag: iterKind) where tag == iterKind.standalone
   {
+    if boxes == nil then return;
     forall i in 0..<size do
         yield boxes[i];
   }
   iter these()
   {
+    if boxes == nil then return;
     for i in 0..<size do
         yield boxes[i];
   }
@@ -47,7 +49,9 @@ extern record GrGeomSolid {
 
     proc interiorBoxes() { return interior_boxes[0]; }
 
-    proc surfaceBoxes(face: int) { return surface_boxes[face][0]; }
+    proc surfaceBoxes(face: int) { 
+        return surface_boxes[face][0]; 
+    }
 
     proc patchBoxes(face: int, patchNum: int) { return patch_boxes[face][patchNum][0]; }
 }
@@ -74,18 +78,18 @@ iter groundGeometryInteriorBoxes(ref groundGeometry: GrGeomSolid, outerDom: doma
         for point in box.dom()[outerDom] do
             yield point;
 }
+iter groundGeometryInteriorBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) 
+  where tag == iterKind.standalone {
+    forall box in groundGeometry.interiorBoxes() do
+        forall point in box.dom()[outerDom] do
+            yield point;
+}
 
-iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, minPoint: Point, maxPoint: Point) {
-    for f in 0..<GrGeomOctreeNumFaces {
-        var fdir: [0..2] int = create_fdir(f);
-        const boxArray = groundGeometry.surface_boxes[f][0];
-        for boxIndex in 0..<boxArray.size {
-            const box = boxArray.boxes[boxIndex];
-            var low: Point = max(minPoint, box.lo);
-            var high: Point = min(maxPoint, box.up);
-            var points: domain(3) = {low[0]..high[0],low[1]..high[1],low[2]..high[2]};
-            for (i,j,k) in points do
-                yield (i,j,k,fdir);
+iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) {
+    for face in 0..<GrGeomOctreeNumFaces {
+        for box in groundGeometry.surfaceBoxes(face) {
+            for (i,j,k) in box.dom()[outerDom] do
+                yield (i,j,k,create_fdir(face));
         }
     }
 }

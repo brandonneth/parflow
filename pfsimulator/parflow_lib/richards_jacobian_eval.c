@@ -599,6 +599,7 @@ void    RichardsJacobianEval(
     FBy_dat = SubvectorData(FBy_sub);
     FBz_dat = SubvectorData(FBz_sub);
 
+  
     #if defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
     real * pp_chapel = p_sub->data;
     real * dp_chapel = d_sub->data;
@@ -1097,7 +1098,7 @@ void    RichardsJacobianEval(
     ForBCStructNumPatches(ipatch, bc_struct)
     {
       bc_patch_values = BCStructPatchValues(bc_struct, ipatch, is);
-
+      
       #ifdef PARFLOW_HAVE_CHAPEL
       ThisPFModule = density_module;
       PhaseDensityConstants(0, CALCFCN, &phase_type,
@@ -1122,7 +1123,6 @@ void    RichardsJacobianEval(
         phase_type, fcn_phase_const, phase_ref, phase_comp,
         bc_patch_values);
       #else
-     // #else ifndef PARFLOW_HAVE_CHAPEL 
       ForPatchCellsPerFace(DirichletBC,
                            BeforeAllCells(
                            {
@@ -1264,7 +1264,7 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
-      #endif
+      //#endif
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),
