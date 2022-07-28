@@ -266,8 +266,9 @@ run_original() {
 if [[ $NEW_CORRECT -eq 1 ]]; then
     CHECK_CORRECTNESS=1
     run_original
-    cd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
+    pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
     cp Outputs/cp.out correct_output/cp.out
+    popd
 fi
 
 if [[ $RUN_ORIGINAL -eq 1 ]]; then
