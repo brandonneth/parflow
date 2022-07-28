@@ -247,7 +247,7 @@ mkdir build
 run_original() {
     echo "Running original variant."
 
-    cd build
+    cd $PARFLOW_DIR/build
     echo "Clearing build directory..."
     rm -rf ./*
 
