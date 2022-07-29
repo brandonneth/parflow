@@ -15,5 +15,5 @@ extern record BCStruct {
     var num_patches: int;
     var patch_indexes: c_ptr(int);
     var bc_types: c_ptr(int);
-    var values: c_ptr(c_ptr(c_ptr(real)));
+    //var values: c_ptr(c_ptr(c_ptr(real)));
 }

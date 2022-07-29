@@ -1,18 +1,23 @@
-use grgeom;
+use groundGeometry;
 use CTypes;
 config param call_only = 0;
 proc subvector_elt_index(x,y,z,ix,iy,iz,nx,ny) {
     return ((x - ix) + ((y - iy) + ((z - iz) *  ny)) * nx);
 }
 
+proc c2ChapelDomain(ix, iy, iz, nx, ny, nz) {
+    const minPoint: Point = (ix:int(32),iy:int(32),iz:int(32));
+    const maxPoint: Point = ( (ix+nx-1) :int(32), (iy+ny-1) :int(32), (iz+nz-1) :int(32));
+    return {minPoint[0]..maxPoint[0],minPoint[1]..maxPoint[1],minPoint[2]..maxPoint[2]};
+}
+
 export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, 
     ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, 
     pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
-    gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
+    gravity: real, region_idx: int, 
+    ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     
-    const minPoint: Point = (ix:int(32),iy:int(32),iz:int(32));
-    const maxPoint: Point = ( (ix+nx-1) :int(32), (iy+ny-1) :int(32), (iz+nz-1) :int(32));
-    const outerDomain: domain(3,int(32)) = {minPoint[0]..maxPoint[0],minPoint[1]..maxPoint[1],minPoint[2]..maxPoint[2]};
+    const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     for (i,j,k,fdir) in groundGeometrySurfaceBoxes(grgeom, outerDomain) {
         var idx = subvector_elt_index(i + fdir[0], j + fdir[1], k + fdir[2], ixv, iyv, izv, nxv, nyv);
 
@@ -32,11 +37,13 @@ export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int,
     }
 }
 
-export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
+export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, 
+    ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, 
+    pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
+    gravity: real, region_idx: int, 
+    ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     
-    const minPoint: Point = (ix:int(32),iy:int(32),iz:int(32));
-    const maxPoint: Point = ( (ix+nx-1) :int(32), (iy+ny-1) :int(32), (iz+nz-1) :int(32));
-    const outerDomain: domain(3,int(32)) = {minPoint[0]..maxPoint[0],minPoint[1]..maxPoint[1],minPoint[2]..maxPoint[2]};
+    const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     for (i,j,k,fdir) in groundGeometrySurfaceBoxes(grgeom, outerDomain) {
         var idx = subvector_elt_index(i + fdir[0], j + fdir[1], k + fdir[2], ixv, iyv, izv, nxv, nyv);
 
@@ -62,9 +69,7 @@ export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, i
 
 }
 export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
-    const minPoint: Point = (ix:int(32),iy:int(32),iz:int(32));
-    const maxPoint: Point = ( (ix+nx-1) :int(32), (iy+ny-1) :int(32), (iz+nz-1) :int(32));
-    const outerDomain: domain(3,int(32)) = {minPoint[0]..maxPoint[0],minPoint[1]..maxPoint[1],minPoint[2]..maxPoint[2]};
+    const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     for (i,j,k) in groundGeometryInteriorBoxes(grgeom, outerDomain) {
 
         var idx = subvector_elt_index(i , j , k, ixv, iyv, izv, nxv, nyv);
@@ -90,9 +95,7 @@ export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, 
     }
 }
 export proc calcfcn_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
-    const minPoint: Point = (ix:int(32),iy:int(32),iz:int(32));
-    const maxPoint: Point = ( (ix+nx-1) :int(32), (iy+ny-1) :int(32), (iz+nz-1) :int(32));
-    const outerDomain: domain(3,int(32)) = {minPoint[0]..maxPoint[0],minPoint[1]..maxPoint[1],minPoint[2]..maxPoint[2]};
+    const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     forall (i,j,k) in groundGeometryInteriorBoxes(grgeom, outerDomain) {
         var idx = subvector_elt_index(i, j, k, ixv, iyv, izv, nxv, nyv);
 

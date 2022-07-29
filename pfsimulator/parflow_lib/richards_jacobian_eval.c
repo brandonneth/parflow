@@ -894,6 +894,20 @@ void    RichardsJacobianEval(
 
       ForBCStructNumPatches(ipatch, bc_struct)
       {
+        #ifdef PARFLOW_HAVE_CHAPEL
+        bc_all_correction(ival, *bc_struct, ipatch, is, gr_domain,
+        r,ix,iy,iz,nx,ny,nz,
+        pp,dp,rpp,ddp,rpdp,
+        permxp,permyp,permzp,
+        z_mult_dat,
+        cp,wp,ep,sop,np,lp,up,
+        dx,dy,dz,dt,sy_v,sz_v,sy_m,sz_m,
+        ffx,ffy,ffz,
+        gravity, viscosity,
+        SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
+        SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
+        bc_patch_values);
+        #else
         ForPatchCellsPerFace(BC_ALL,
                              BeforeAllCells(DoNothing),
                              LoopVars(i, j, k, ival, bc_struct, ipatch, is),
@@ -1008,6 +1022,7 @@ void    RichardsJacobianEval(
                              CellFinalize(DoNothing),
                              AfterAllCells(DoNothing)
           ); /* End Patch Loop */
+        #endif
       }           /* End ipatch loop */
     }             /* End subgrid loop */
   }                  /* End if symm_part */
@@ -1099,30 +1114,7 @@ void    RichardsJacobianEval(
     {
       bc_patch_values = BCStructPatchValues(bc_struct, ipatch, is);
       
-      #ifdef PARFLOW_HAVE_CHAPEL
-      ThisPFModule = density_module;
-      PhaseDensityConstants(0, CALCFCN, &phase_type,
-                            &fcn_phase_const,
-                            &phase_ref,
-                            &phase_comp);
-      PhaseDensityConstants(0, CALCDER, &phase_type,
-                            &der_phase_const,
-                            &phase_ref,
-                            &phase_comp);
-      dirichlet_bc_correction(ival, *bc_struct, ipatch, is, 
-        BCStructGrDomain(bc_struct), 
-        r, ix, iy,iz,nx,ny,nz,
-        pp,dp,rpp,ddp,rpdp,
-        permxp, permyp,permzp,
-        z_mult_dat, 
-        cp,wp,ep,sop,np,lp,up,
-        dx,dy,dz,dt, sy_v, sz_v, sy_m, sz_m, 
-        gravity, viscosity,
-        SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
-        SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
-        phase_type, fcn_phase_const, phase_ref, phase_comp,
-        bc_patch_values);
-      #else
+      
       ForPatchCellsPerFace(DirichletBC,
                            BeforeAllCells(
                            {
@@ -1264,7 +1256,7 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
-      //#endif
+        
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),
@@ -1498,7 +1490,17 @@ void    RichardsJacobianEval(
   PFModuleInvokeType(RichardsBCInternalInvoke, bc_internal, (problem, problem_data, NULL, J, time,
                                                              pressure, CALCDER));
 
-
+#ifdef PARFLOW_CHECK_CORRECTNESS
+  static int pass_num = -1;
+  pass_num += 1;
+  FILE * f = fopen("cp.out", "a");
+  int index_counter = 0;
+  for(double * ptr = cp; ptr < up; ptr++) {
+    fprintf(f, "%d %d %.5f\n", pass_num, index_counter, *ptr);
+    index_counter += 1;
+  };
+  fclose(f);
+  #endif
 
   if (public_xtra->type == overland_flow)
   {
@@ -1972,17 +1974,7 @@ void    RichardsJacobianEval(
 //#endif */
     });
   }
-  #ifdef PARFLOW_CHECK_CORRECTNESS
-  static int pass_num = -1;
-  pass_num += 1;
-  FILE * f = fopen("cp.out", "a");
-  int index_counter = 0;
-  for(double * ptr = cp; ptr < up; ptr++) {
-    fprintf(f, "%d %d %f\n", pass_num, index_counter, *ptr);
-    index_counter += 1;
-  };
-  fclose(f);
-  #endif
+  
 
   /*-----------------------------------------------------------------------
    * Update matrix ghost points
