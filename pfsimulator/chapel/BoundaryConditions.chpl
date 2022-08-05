@@ -1,6 +1,6 @@
 use CTypes;
-use grgeom;
-use octree;
+use GroundGeometry;
+
 require "problem_bc.h";
 const BC_ALL = -1;
 const DirichletBC = 0;

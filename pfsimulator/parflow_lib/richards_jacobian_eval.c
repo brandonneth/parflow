@@ -45,7 +45,7 @@
 #include "assert.h"
 
 #ifdef PARFLOW_HAVE_CHAPEL
-#include "chapel_impl.h"
+#include "ChapelImpl.h"
 #endif
 /*---------------------------------------------------------------------
  * Define module structures
@@ -600,7 +600,7 @@ void    RichardsJacobianEval(
     FBz_dat = SubvectorData(FBz_sub);
 
   
-    #if defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
+    #ifdef PARFLOW_HAVE_CHAPEL
     real * pp_chapel = p_sub->data;
     real * dp_chapel = d_sub->data;
     real * rpp_chapel = rp_sub->data;
@@ -640,8 +640,7 @@ void    RichardsJacobianEval(
       SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
       SubvectorIX(x_ssl_sub), SubvectorIY(x_ssl_sub), SubvectorIZ(x_ssl_sub), SubvectorNX(x_ssl_sub), SubvectorNY(x_ssl_sub),
       symm_part);
-    #endif
-    #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
+    #else
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
       int ip = SubvectorEltIndex(p_sub, i, j, k);
@@ -1008,6 +1007,7 @@ void    RichardsJacobianEval(
                              CellFinalize(DoNothing),
                              AfterAllCells(DoNothing)
           ); /* End Patch Loop */
+
       }           /* End ipatch loop */
     }             /* End subgrid loop */
   }                  /* End if symm_part */
@@ -1099,30 +1099,7 @@ void    RichardsJacobianEval(
     {
       bc_patch_values = BCStructPatchValues(bc_struct, ipatch, is);
       
-      #ifdef PARFLOW_HAVE_CHAPEL
-      ThisPFModule = density_module;
-      PhaseDensityConstants(0, CALCFCN, &phase_type,
-                            &fcn_phase_const,
-                            &phase_ref,
-                            &phase_comp);
-      PhaseDensityConstants(0, CALCDER, &phase_type,
-                            &der_phase_const,
-                            &phase_ref,
-                            &phase_comp);
-      dirichlet_bc_correction(ival, *bc_struct, ipatch, is, 
-        BCStructGrDomain(bc_struct), 
-        r, ix, iy,iz,nx,ny,nz,
-        pp,dp,rpp,ddp,rpdp,
-        permxp, permyp,permzp,
-        z_mult_dat, 
-        cp,wp,ep,sop,np,lp,up,
-        dx,dy,dz,dt, sy_v, sz_v, sy_m, sz_m, 
-        gravity, viscosity,
-        SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
-        SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
-        phase_type, fcn_phase_const, phase_ref, phase_comp,
-        bc_patch_values);
-      #else
+      
       ForPatchCellsPerFace(DirichletBC,
                            BeforeAllCells(
                            {
@@ -1264,7 +1241,7 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
-      //#endif
+      
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),

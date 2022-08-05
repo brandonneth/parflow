@@ -1,4 +1,4 @@
-use grgeom;
+use GroundGeometry;
 use CTypes;
 config param call_only = 0;
 proc subvector_elt_index(x,y,z,ix,iy,iz,nx,ny) {

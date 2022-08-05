@@ -1,11 +1,36 @@
 use CTypes;
 
-use octree;
-
 require "index_space.h";
 require "grgeometry.h";
 require "input_database.h";
 extern type Point = 3*int(32);
+const GrGeomOctreeNumFaces = 6;
+const GrGeomOctreeNumChildren = 8;
+
+const GrGeomOctreeNodeEmpty: uint(8) = 1;
+const GrGeomOctreeNodeOutside: uint(8) = 2;
+const GrGeomOctreeNodeInside: uint(8) = 4;
+const GrGeomOctreeNodeFull: uint(8) = 8;
+const GrGeomOctreeNodeLeaf: uint(8) = 16;
+
+const GrGeomOctreeFaceL = 0;
+const GrGeomOctreeFaceR = 1;
+const GrGeomOctreeFaceD = 2;
+const GrGeomOctreeFaceU = 3;
+const GrGeomOctreeFaceB = 4;
+const GrGeomOctreeFaceF = 5;
+
+const fdirL = (-1,0,0);
+const fdirR = (1,0,0);
+const fdirD = (0,-1,0);
+const fdirU = (0,1,0);
+const fdirB = (0,0,-1);
+const fdirF = (0,0,1);
+const fdirs = (fdirL, fdirR, fdirD, fdirU, fdirB, fdirF);
+
+proc create_fdir(f: int) {
+    return fdirs[f];
+}
 
 extern record Box {
     var lo: Point;
@@ -40,8 +65,8 @@ extern record BoxArray {
 }
 
 extern record GrGeomSolid {
-    var data: c_ptr(GrGeomOctree);
-    var patches: c_ptr(c_ptr(GrGeomOctree));
+    //var data: c_ptr(GrGeomOctree);
+    //var patches: c_ptr(c_ptr(GrGeomOctree));
     var octree_bg_level, octree_ix, octree_iy, octree_iz: int;
     var interior_boxes: c_ptr(BoxArray);
     var surface_boxes : c_ptr(c_ptr(BoxArray));
@@ -49,8 +74,8 @@ extern record GrGeomSolid {
 
     proc interiorBoxes() { return interior_boxes[0]; }
 
-    proc surfaceBoxes(face: int) { 
-        return surface_boxes[face][0]; 
+    proc surfaceBoxes(face: int) {
+        return surface_boxes[face][0];
     }
 
     proc patchBoxes(face: int, patchNum: int) { return patch_boxes[face][patchNum][0]; }
@@ -78,7 +103,7 @@ iter groundGeometryInteriorBoxes(ref groundGeometry: GrGeomSolid, outerDom: doma
         for point in box.dom()[outerDom] do
             yield point;
 }
-iter groundGeometryInteriorBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) 
+iter groundGeometryInteriorBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32)))
   where tag == iterKind.standalone {
     forall box in groundGeometry.interiorBoxes() do
         forall point in box.dom()[outerDom] do
@@ -86,10 +111,8 @@ iter groundGeometryInteriorBoxes(param tag: iterKind, ref groundGeometry: GrGeom
 }
 
 iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) {
-    for face in 0..<GrGeomOctreeNumFaces {
-        for box in groundGeometry.surfaceBoxes(face) {
+    for face in 0..<GrGeomOctreeNumFaces do
+        for box in groundGeometry.surfaceBoxes(face) do
             for (i,j,k) in box.dom()[outerDom] do
                 yield (i,j,k,create_fdir(face));
-        }
-    }
 }

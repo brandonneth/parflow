@@ -148,7 +148,7 @@ build_parflow() {
 build_chapel_modules() {
     pushd $PARFLOW_DIR/pfsimulator/chapel
     BCM_FAST=0
-    BCM_CALL_ONLY=0
+
     while test $# -gt 0
     do
         case "$1" in
@@ -166,7 +166,7 @@ build_chapel_modules() {
         BCM_COMMAND="$BCM_COMMAND --fast "
     fi
 
-    BCM_COMMAND="$BCM_COMMAND --library chapel_impl.chpl "
+    BCM_COMMAND="$BCM_COMMAND --library-cmakelists ChapelImpl.chpl "
 
     if $BCM_COMMAND; then
         echo "Chapel modules built successfully."
@@ -185,20 +185,20 @@ check_correctness() {
     echo "Checking correctness..."
     pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 
-    
+
     diff Outputs/cp.out correct_output/cp.out > $DIFF_FILE
 
     DIFF=$(cat $DIFF_FILE)
     if [ "$DIFF" ]; then
         echo "Correctness check failed."
-       
+
     else
         echo "Correctness check passed."
     fi
     popd
 }
 
-#Runs the example and saves the execution times. Name of the variant is 
+#Runs the example and saves the execution times. Name of the variant is
 # the first and only argument to this function
 run_example() {
     RE_VARIANT_NAME=$1
@@ -259,7 +259,7 @@ run_original() {
 
     echo "Preparing to run Little Washita Example..."
     run_example original
-    
+
     echo "Done running original variant."
 }
 
@@ -278,7 +278,7 @@ fi
 run_omp() {
 
     echo "Running OpenMP Variant"
-    
+
     cd $PARFLOW_DIR/build
     echo "Clearing build directory..."
     rm -rf ./*
@@ -343,4 +343,3 @@ run_chapel_fast() {
 if [[ $RUN_CHAPEL_FAST = 1 ]]; then
     run_chapel_fast
 fi
-

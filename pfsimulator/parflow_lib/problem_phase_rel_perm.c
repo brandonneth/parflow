@@ -31,7 +31,7 @@
 #include <assert.h>
 
 #ifdef PARFLOW_HAVE_CHAPEL
-#include "chapel_impl.h"
+#include "ChapelImpl.h"
 #endif
 /*--------------------------------------------------------------------------
  * Structures
@@ -415,6 +415,7 @@ void         PhaseRelPerm(
                                              *                  derivative */
 
 {
+  fprintf(stdout, "PhaseRelPerm\n");
   PFModule      *this_module = ThisPFModule;
   PublicXtra    *public_xtra = (PublicXtra*)PFModulePublicXtra(this_module);
 
@@ -774,7 +775,7 @@ void         PhaseRelPerm(
                 calcfcn_compute_vang_curve_surface(gr_solid, r, ix, iy, iz, nx, ny, nz, &pr_sub_chapel, &pp_sub_chapel, &pd_sub_chapel, &alphas_chapel, &ns_chapel, gravity, ir, SubvectorIX(pr_sub), SubvectorIY(pr_sub), SubvectorIZ(pr_sub), SubvectorNX(pr_sub), SubvectorNY(pr_sub));
                 #endif
                 #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
-                //fprintf(stderr, "running macro.\n");
+                
                 GrGeomSurfLoop(i, j, k, fdir, gr_solid, r, ix, iy, iz,
                                nx, ny, nz,
                 {
@@ -1756,7 +1757,7 @@ void         PhaseRelPerm(
   /*-----------------------------------------------------------------------
    * End timing
    *-----------------------------------------------------------------------*/
-
+  fprintf(stdout, "end PhaseRelPerm\n");
   IncFLOPCount(1);
   EndTiming(public_xtra->time_index);
 }
@@ -2115,6 +2116,8 @@ PFModule   *PhaseRelPermNewPublicXtra()
                  switch_name, key);
     }
   }      /* End switch */
+
+  
 
   (public_xtra->time_index) = RegisterTiming("PhaseRelPerm");
 
