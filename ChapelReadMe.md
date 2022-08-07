@@ -23,6 +23,7 @@ are:
 - `--omp`: Original C variant, parallelized with OpenMP
 - `--chapel`: C+Chapel variant, no `--fast` compiler flag
 - `--chapel-fast`: C +Chapel variant, Chapel library compiled with optimization
+
 Executing the following line will run all four variants, useful for performance
 comparisons:
 ```
