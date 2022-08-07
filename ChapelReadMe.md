@@ -33,7 +33,7 @@ bash performance-evaluation.sh --original --omp --chapel --chapel-fast
 The script has two ways to modify the executed benchmark. First, the `--n` flag
 changes the number of repetitions to run for each variant. Second, the `--lw`
 flag changes the input `.tcl` file for the execution. Currently, 3 options are
-supported. In increasing side order, they are `LW_Tiny.tcl`, `LW_Test.tcl`, and
+supported. In increasing size order, they are `LW_Tiny.tcl`, `LW_Test.tcl`, and
 `LW_Timing.tcl`. This correspond to the files in the
 `test/tcl/washita/tcl_scripts/` directory.
 
