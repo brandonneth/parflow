@@ -1,10 +1,5 @@
 use CTypes;
 
-<<<<<<<< HEAD:pfsimulator/chapel/groundGeometry.chpl
-use octree;
-use boundary_conditions;
-========
->>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668:pfsimulator/chapel/GroundGeometry.chpl
 require "index_space.h";
 require "grgeometry.h";
 require "input_database.h";
@@ -96,30 +91,22 @@ iter groundGeometryInteriorBoxes(ref groundGeometry: GrGeomSolid,
         for point in box.dom()[outerDom] do
             yield point;
 }
-<<<<<<<< HEAD:pfsimulator/chapel/groundGeometry.chpl
+
 iter groundGeometryInteriorBoxes(param tag: iterKind, 
                                  ref groundGeometry: GrGeomSolid, 
                                  outerDom: domain(3, int(32))) 
-========
-iter groundGeometryInteriorBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32)))
->>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668:pfsimulator/chapel/GroundGeometry.chpl
   where tag == iterKind.standalone {
     forall box in groundGeometry.interiorBoxes() do
         forall point in box.dom()[outerDom] do
             yield point;
 }
 
-<<<<<<<< HEAD:pfsimulator/chapel/groundGeometry.chpl
+
 iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, 
                                 outerDom: domain(3, int(32))) {
-========
-iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, outerDom: domain(3, int(32))) {
->>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668:pfsimulator/chapel/GroundGeometry.chpl
-    for face in 0..<GrGeomOctreeNumFaces do
         for box in groundGeometry.surfaceBoxes(face) do
             for (i,j,k) in box.dom()[outerDom] do
                 yield (i,j,k,create_fdir(face));
-<<<<<<<< HEAD:pfsimulator/chapel/groundGeometry.chpl
 }
 iter groundGeometrySurfaceBoxes(param tag: iterKind,
                                 ref groundGeometry: GrGeomSolid, 
@@ -132,22 +119,16 @@ iter groundGeometrySurfaceBoxes(param tag: iterKind,
 
 iter groundGeometryPatchBoxes(ref groundGeometry: GrGeomSolid, patchNum: int, 
                               outerDom: domain(3, int(32))) {
-    for face in 0..<GrGeomOctreeNumFaces {
-        for box in groundGeometry.patchBoxes(face, patchNum) {
+    for face in 0..<GrGeomOctreeNumFaces do
+        for box in groundGeometry.patchBoxes(face, patchNum) do
             for (i,j,k) in box.dom()[outerDom] do
-            yield (i,j,k,face);
-        }
-    }
-========
->>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668:pfsimulator/chapel/GroundGeometry.chpl
+                yield (i,j,k,face);
 }
 iter groundGeometryPatchBoxes(param tag: iterKind, ref groundGeometry: GrGeomSolid, patchNum: int, outerDom: domain(3, int(32)))
     where tag == iterKind.standalone
 {
-    forall face in 0..<GrGeomOctreeNumFaces {
-        forall box in groundGeometry.patchBoxes(face, patchNum) {
+    forall face in 0..<GrGeomOctreeNumFaces do
+        forall box in groundGeometry.patchBoxes(face, patchNum) do
             forall (i,j,k) in box.dom()[outerDom] do
-            yield (i,j,k,face);
-        }
-    }
+                yield (i,j,k,face);
 }
