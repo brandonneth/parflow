@@ -2,10 +2,10 @@
 
 add_executable(parflow main.c)
 
-include(../chapel/CMakeLists.txt)
-target_include_directories(parflow PRIVATE ${CHPL_INCLUDE_DIRECTORIES})
-target_link_directories(parflow PRIVATE ${CHPL_LINK_DIRECTORIES})
-target_link_libraries(parflow ${CHPL_LINK_LIBRARIES})
+include(../chapel/lib/ChapelImpl.cmake)
+target_include_directories(parflow PRIVATE ${ChapelImpl_INCLUDE_DIRS})
+target_link_libraries(parflow ${ChapelImpl_LINK_LIBS})
+
 
 target_link_libraries(parflow pfsimulator)
 

@@ -45,7 +45,7 @@
 #include "assert.h"
 
 #ifdef PARFLOW_HAVE_CHAPEL
-#include "chapel_impl.h"
+#include "ChapelImpl.h"
 #endif
 /*---------------------------------------------------------------------
  * Define module structures
@@ -600,7 +600,7 @@ void    RichardsJacobianEval(
     FBz_dat = SubvectorData(FBz_sub);
 
   
-    #if defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
+    #ifdef PARFLOW_HAVE_CHAPEL
     real * pp_chapel = p_sub->data;
     real * dp_chapel = d_sub->data;
     real * rpp_chapel = rp_sub->data;
@@ -640,8 +640,7 @@ void    RichardsJacobianEval(
       SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
       SubvectorIX(x_ssl_sub), SubvectorIY(x_ssl_sub), SubvectorIZ(x_ssl_sub), SubvectorNX(x_ssl_sub), SubvectorNY(x_ssl_sub),
       symm_part);
-    #endif
-    #if !defined(PARFLOW_HAVE_CHAPEL) || defined(PARFLOW_CALL_ONLY)
+    #else
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
       int ip = SubvectorEltIndex(p_sub, i, j, k);
@@ -1023,6 +1022,7 @@ void    RichardsJacobianEval(
                              AfterAllCells(DoNothing)
           ); /* End Patch Loop */
         #endif
+
       }           /* End ipatch loop */
     }             /* End subgrid loop */
   }                  /* End if symm_part */
@@ -1256,7 +1256,11 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
+<<<<<<< HEAD
         
+=======
+      
+>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),

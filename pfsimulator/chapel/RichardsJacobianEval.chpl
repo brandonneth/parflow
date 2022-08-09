@@ -1,14 +1,12 @@
-use groundGeometry;
-use CTypes;
-use phase_rel_perm_chapel;
 
-use octree;
-use boundary_conditions;
-//config param call_only = 0;
+use GroundGeometry;
+use CTypes;
+use PhaseRelPerm;
+use BoundaryConditions;
+
+
 proc mean(a,b) { return (a+b) / 2;}
 
-//config const dataParMinGranularity = 1000;
-//config const dataParTasksPerLocale = 2;
 proc harmonic_mean(a,b) {
     if (a + b == 0) {
         return 0;
@@ -16,6 +14,7 @@ proc harmonic_mean(a,b) {
         return (2 * a * b) / (a + b);
     }
 }
+
 proc harmonic_mean_dz(a,b,c,d) {
     if((c*b) + (a*d) != 0) {
         return (((c+d) * a*b) / ((b*c) + (a*d)));
@@ -23,21 +22,16 @@ proc harmonic_mean_dz(a,b,c,d) {
         return 0;
     }
 }
+
 proc upstream_mean(a,b,c,d) {if (a - b) >= 0 then return c; else return d;}
 
-proc Mean(a,b) {
-    return mean(a,b);
-}
-proc PMean(a,b,c,d) {
-    return harmonic_mean(c,d);
-}
-proc PMeanDZ(a,b,c,d) {
-    return harmonic_mean_dz(a,b,c,d);
-}
+proc Mean(a,b) {return mean(a,b);}
 
-proc RPMean(a,b,c,d) {
-    return upstream_mean(a,b,c,d);
-}
+proc PMean(a,b,c,d) { return harmonic_mean(c,d);}
+
+proc PMeanDZ(a,b,c,d) {return harmonic_mean_dz(a,b,c,d);}
+
+proc RPMean(a,b,c,d) {return upstream_mean(a,b,c,d);}
 
 export proc richards_gravity_and_second_order_derivative_interior(ref gr_domain: GrGeomSolid,
 r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, //args for the iteration

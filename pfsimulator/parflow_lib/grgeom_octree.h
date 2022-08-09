@@ -653,6 +653,7 @@ typedef struct grgeom_octree {
 #define GrGeomOctreeInsideLoop(i, j, k, l, node, octree, level, value_test, \
                                level_body, code_body)                       \
   {                                                                         \
+    fprintf(stdout, "OctreeInsideLoop\n");\
     int PV_level = level;                                                   \
     unsigned int PV_inc;                                                    \
     int           *PV_visiting;                                             \

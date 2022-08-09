@@ -1,4 +1,8 @@
+<<<<<<< HEAD:pfsimulator/chapel/phase_rel_perm_chapel.chpl
 use groundGeometry;
+=======
+use GroundGeometry;
+>>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668:pfsimulator/chapel/PhaseRelPerm.chpl
 use CTypes;
 config param call_only = 0;
 proc subvector_elt_index(x,y,z,ix,iy,iz,nx,ny) {

@@ -70,7 +70,7 @@ using namespace SAMRAI;
 #include <unistd.h>
 
 #ifdef PARFLOW_HAVE_CHAPEL
-#include "grgeom.h"
+#include "ChapelImpl.h"
 #endif
 int main(int argc, char *argv [])
 {
@@ -89,7 +89,7 @@ int main(int argc, char *argv [])
   fprintf(stderr, "done with init.\n");
   fflush(stderr);
   
-  chpl__init_grgeom(0,0);
+  chpl__init_GroundGeometry(0,0);
   
   #endif
     FILE *file = NULL;
