@@ -282,6 +282,8 @@ if (${PARFLOW_HAVE_NETCDF})
   target_include_directories (pfsimulator PUBLIC "${NETCDF_INCLUDE_DIRS}")
 endif (${PARFLOW_HAVE_NETCDF})
 
+if (${PARFLOW_HAVE_CHAPEL})
 include(../chapel/lib/ChapelImpl.cmake)
 target_include_directories(pfsimulator PRIVATE ${ChapelImpl_INCLUDE_DIRS})
 target_link_libraries(pfsimulator ${ChapelImpl_LINK_LIBS})
+endif (${PARFLOW_HAVE_CHAPEL})

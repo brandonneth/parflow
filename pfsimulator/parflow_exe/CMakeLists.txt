@@ -1,11 +1,11 @@
 
 
 add_executable(parflow main.c)
-
+if ( ${PARFLOW_HAVE_CHAPEL} )
 include(../chapel/lib/ChapelImpl.cmake)
 target_include_directories(parflow PRIVATE ${ChapelImpl_INCLUDE_DIRS})
 target_link_libraries(parflow ${ChapelImpl_LINK_LIBS})
-
+endif ( ${PARFLOW_HAVE_CHAPEL} )
 
 target_link_libraries(parflow pfsimulator)
 
