@@ -4,11 +4,14 @@ ParFlow. All building and running of this variant is done through the
 
 ### Prerequisites
 
-Two tasks need to be complete before running the C+Chapel version.
+A couple of tasks need to be complete before running the C+Chapel version.
 First, the `PARFLOW_DIR` environment variable should be set to the 
 base ParFlow directory (the directory containing this readme).
 Second, the user should update and build a current version of Chapel and set the 
 `CHPL_HOME` variable to the base directory of the Chapel repository.
+
+Lastly, you should install Hypre and Silo as directed in the ParFlow manual and set
+`HYPRE_DIR` and `SILO_DIR` to the directories containing their `lib` folders.
 
 ### Quickstart
 
