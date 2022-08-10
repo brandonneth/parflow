@@ -6,7 +6,7 @@ ParFlow. All building and running of this variant is done through the
 
 Two tasks need to be complete before running the C+Chapel version.
 First, the `PARFLOW_DIR` environment variable should be set to the 
-base parflow directory (the directory containing this readme).
+base ParFlow directory (the directory containing this readme).
 Second, the user should update and build a current version of Chapel and set the 
 `CHPL_HOME` variable to the base directory of the Chapel repository.
 
