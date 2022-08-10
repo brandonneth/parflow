@@ -14,8 +14,8 @@ proc c2ChapelDomain(ix, iy, iz, nx, ny, nz) {
 }
 
 export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, 
-    ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, 
-    pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
+    ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: c_ptr(real), 
+    pp_sub: c_ptr(real), pd_sub: c_ptr(real), alphas: c_ptr(real), ns: c_ptr(real), 
     gravity: real, region_idx: int, 
     ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     
@@ -41,7 +41,7 @@ export proc calcfcn_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int,
 
 export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int, 
     ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, 
-    pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, 
+    pr_sub: c_ptr(real), pp_sub: c_ptr(real), pd_sub: c_ptr(real), alphas: c_ptr(real), ns: c_ptr(real), 
     gravity: real, region_idx: int, 
     ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     
@@ -70,10 +70,13 @@ export proc calcder_compute_vang_curve_surface(ref grgeom:GrGeomSolid, r: int,
     }
 
 }
-export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
+export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int,
+ ix: int, iy: int, iz: int, nx: int, ny: int, nz: int,
+ pr_sub: c_ptr(real), pp_sub: c_ptr(real), pd_sub: c_ptr(real),
+ alphas: c_ptr(real), ns: c_ptr(real), gravity: real, region_idx: int,
+ ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     for (i,j,k) in groundGeometryInteriorBoxes(grgeom, outerDomain) {
-
         var idx = subvector_elt_index(i , j , k, ixv, iyv, izv, nxv, nyv);
 
         if (pp_sub[idx] >= 0.0) {
@@ -96,7 +99,12 @@ export proc calcder_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, 
         }
     }
 }
-export proc calcfcn_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int, ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, pr_sub: [] real, pp_sub: [] real, pd_sub: [] real, alphas: []real, ns: [] real, gravity: real, region_idx: int, ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
+
+export proc calcfcn_compute_vang_curve_interior(ref grgeom:GrGeomSolid, r: int,
+ix: int, iy: int, iz: int, nx: int, ny: int, nz: int, 
+pr_sub: c_ptr(real), pp_sub: c_ptr(real), pd_sub: c_ptr(real),
+alphas: c_ptr(real), ns: c_ptr(real), gravity: real, region_idx: int,
+ixv: int, iyv: int, izv: int, nxv: int, nyv: int) {
     const outerDomain:domain(3,int(32)) = c2ChapelDomain(ix,iy,iz,nx,ny,nz);
     forall (i,j,k) in groundGeometryInteriorBoxes(grgeom, outerDomain) {
         var idx = subvector_elt_index(i, j, k, ixv, iyv, izv, nxv, nyv);

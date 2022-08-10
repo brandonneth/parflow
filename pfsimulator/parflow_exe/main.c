@@ -76,21 +76,17 @@ int main(int argc, char *argv [])
 {
   
   #ifdef PARFLOW_HAVE_CHAPEL
-  //fprintf(stderr, "chpl_library_init(argc,argv)\n");
-  //fprintf(stderr, "chpl_library_init(0,argv)\n");
   fprintf(stderr, "chpl_library_init(1,argv)\n");
-
   fflush(stderr);
-  
-  //chpl_library_init(argc, argv);
-  //chpl_library_init(0, argv);
   chpl_library_init(1, argv);
-  
   fprintf(stderr, "done with init.\n");
   fflush(stderr);
   
+  fprintf(stderr, "Initializing Chapel GroundGeometry...\n");
+  fflush(stderr);
   chpl__init_GroundGeometry(0,0);
-  
+  fprintf(stderr, "Ground Geometry Initialized\n");
+  fflush(stderr);
   #endif
     FILE *file = NULL;
 

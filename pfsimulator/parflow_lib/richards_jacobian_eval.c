@@ -627,6 +627,8 @@ void    RichardsJacobianEval(
     real * np_chapel = np;
     real * lp_chapel = lp;
     real * up_chapel = up;
+
+  
     richards_gravity_and_second_order_derivative_interior(
       gr_domain, r, ix, iy, iz, nx, ny, nz,
       pp_chapel, dp_chapel, rpp_chapel, ddp_chapel, rpdp_chapel,
@@ -640,6 +642,7 @@ void    RichardsJacobianEval(
       SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
       SubvectorIX(x_ssl_sub), SubvectorIY(x_ssl_sub), SubvectorIZ(x_ssl_sub), SubvectorNX(x_ssl_sub), SubvectorNY(x_ssl_sub),
       symm_part);
+
     #else
     GrGeomInLoop(i, j, k, gr_domain, r, ix, iy, iz, nx, ny, nz,
     {
@@ -894,6 +897,7 @@ void    RichardsJacobianEval(
       ForBCStructNumPatches(ipatch, bc_struct)
       {
         #ifdef PARFLOW_HAVE_CHAPEL
+        fprintf(stderr, "calling bc_all_correction\n");
         bc_all_correction(ival, *bc_struct, ipatch, is, gr_domain,
         r,ix,iy,iz,nx,ny,nz,
         pp,dp,rpp,ddp,rpdp,
@@ -906,6 +910,7 @@ void    RichardsJacobianEval(
         SubvectorIX(p_sub), SubvectorIY(p_sub), SubvectorIZ(p_sub), SubvectorNX(p_sub), SubvectorNY(p_sub),
         SubvectorIX(J_sub), SubvectorIY(J_sub), SubvectorIZ(J_sub), SubvectorNX(J_sub), SubvectorNY(J_sub),
         bc_patch_values);
+        fprintf(stderr, "done with bc_all_correction\n");
         #else
         ForPatchCellsPerFace(BC_ALL,
                              BeforeAllCells(DoNothing),
@@ -1256,11 +1261,7 @@ void    RichardsJacobianEval(
                            }),
                            AfterAllCells(DoNothing)
         ); /* End DirichletBC */
-<<<<<<< HEAD
-        
-=======
-      
->>>>>>> 3e9523dc137da4da409677ea93734dc8b9a9b668
+
       ForPatchCellsPerFace(FluxBC,
                            BeforeAllCells(DoNothing),
                            LoopVars(i, j, k, ival, bc_struct, ipatch, is),

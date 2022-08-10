@@ -5,13 +5,6 @@ require "grgeometry.h";
 require "input_database.h";
 extern type Point = 3*int(32);
 const GrGeomOctreeNumFaces = 6;
-const GrGeomOctreeNumChildren = 8;
-
-const GrGeomOctreeNodeEmpty: uint(8) = 1;
-const GrGeomOctreeNodeOutside: uint(8) = 2;
-const GrGeomOctreeNodeInside: uint(8) = 4;
-const GrGeomOctreeNodeFull: uint(8) = 8;
-const GrGeomOctreeNodeLeaf: uint(8) = 16;
 
 const GrGeomOctreeFaceL = 0;
 const GrGeomOctreeFaceR = 1;
@@ -41,6 +34,9 @@ extern record Box {
     iter points(param tag: iterKind) where tag == iterKind.standalone {
         forall point in dom() do yield point;
     }
+    iter points() {
+        for point in dom() do yield point;
+    }
 };
 
 extern record BoxArray {
@@ -65,8 +61,6 @@ extern record BoxArray {
 }
 
 extern record GrGeomSolid {
-    //var data: c_ptr(GrGeomOctree);
-    //var patches: c_ptr(c_ptr(GrGeomOctree));
     var octree_bg_level, octree_ix, octree_iy, octree_iz: int;
     var interior_boxes: c_ptr(BoxArray);
     var surface_boxes : c_ptr(c_ptr(BoxArray));
@@ -104,16 +98,17 @@ iter groundGeometryInteriorBoxes(param tag: iterKind,
 
 iter groundGeometrySurfaceBoxes(ref groundGeometry: GrGeomSolid, 
                                 outerDom: domain(3, int(32))) {
+    for face in 0..<GrGeomOctreeNumFaces do 
         for box in groundGeometry.surfaceBoxes(face) do
             for (i,j,k) in box.dom()[outerDom] do
                 yield (i,j,k,create_fdir(face));
 }
 iter groundGeometrySurfaceBoxes(param tag: iterKind,
                                 ref groundGeometry: GrGeomSolid, 
-                                outerDom: domain(3, int(32))) {
-    for face in 0..<GrGeomOctreeNumFaces do
-        for box in groundGeometry.surfaceBoxes(face) do
-            for (i,j,k) in box.dom()[outerDom] do
+                                outerDom: domain(3, int(32))) where tag == iterKind.standalone {
+    forall face in 0..<GrGeomOctreeNumFaces do
+        forall box in groundGeometry.surfaceBoxes(face) do
+            forall (i,j,k) in box.dom()[outerDom] do
                 yield (i,j,k,create_fdir(face));
 }
 

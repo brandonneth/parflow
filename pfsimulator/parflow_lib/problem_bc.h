@@ -35,7 +35,9 @@
 
 #ifndef _PROBLEM_BC_HEADER
 #define _PROBLEM_BC_HEADER
-
+typedef struct GrGeomSolid_ GrGeomSolid;
+#include "region.h"
+typedef SubregionArray SubgridArray;
 /**
  * @name Boundary Condition Types
  * @brief Boundary condition types for conditional branching in patch loops
