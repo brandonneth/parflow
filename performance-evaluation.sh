@@ -159,7 +159,7 @@ build_chapel_modules() {
     done
 
     BCM_INCLUDES="-I../parflow_lib -I../parflow_lib \
-    -I ../amps/mpi1/ -I../../build/include/ -I../amps/common"
+    -I ../amps/mpi1/ -I../../build/include/ -I../amps/common -I/usr/include/aarch64-linux-gnu/mpi"
 
     BCM_COMMAND="chpl $BCM_INCLUDES"
     if [[ $BCM_FAST -eq 1 ]]; then
