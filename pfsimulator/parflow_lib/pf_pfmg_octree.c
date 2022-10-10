@@ -188,9 +188,23 @@ void         PFMGOctree(
     hypre_BoxDestroy(value_box);
   }
   HYPRE_StructVectorAssemble(hypre_b);
-
+  
   EndTiming(public_xtra->time_index_copy_hypre);
-
+  static int writeCount = 0;
+  char m[50], b[50], x[50];
+  if(writeCount % 10 == 0) {
+  strcpy(m, "matrix");
+  strcpy(b, "b");
+  strcpy(x, "x");
+  sprintf(m, "matrix_%d", writeCount);
+  sprintf(b, "b_%d", writeCount);
+  sprintf(x, "x_%d", writeCount);
+ 
+  HYPRE_StructMatrixPrint(m, hypre_mat, 1);
+  HYPRE_StructVectorPrint(b, hypre_b, 1);
+  HYPRE_StructVectorPrint(x, hypre_x, 1);
+  }
+  writeCount += 1;
   if (tol > 0.0)
   {
     IfLogging(1)
