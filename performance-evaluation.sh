@@ -186,7 +186,7 @@ check_correctness() {
     pushd $PARFLOW_DIR/test/tcl/washita/tcl_scripts
 
     echo "failed" > $DIFF_FILE
-    #diff Outputs/cp.out correct_output/cp.out > $DIFF_FILE
+    diff Outputs/cp.out correct_output/cp.out > $DIFF_FILE
 
     DIFF=$(cat $DIFF_FILE)
     if [ "$DIFF" ]; then
