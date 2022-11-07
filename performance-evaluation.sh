@@ -191,7 +191,7 @@ check_correctness() {
     DIFF=$(cat $DIFF_FILE)
     if [ "$DIFF" ]; then
         echo "Correctness check failed."
-
+        exit 4
     else
         echo "Correctness check passed."
     fi
